@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: fincontrol_db
+    environment:
+      POSTGRES_DB: fincontrol
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: fincontrol123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: fincontrol_backend
+    environment:
+      DATABASE_URL: postgresql://postgres:fincontrol123@db:5432/fincontrol
+      SECRET_KEY: fincontrol-chave-secreta-2024-troque-em-producao
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 10080
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+  frontend:
+    build: ./frontend
+    container_name: fincontrol_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    restart: on-failure
+
+volumes:
+  postgres_data:
