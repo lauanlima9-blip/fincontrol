@@ -6,7 +6,7 @@ import { Plus, Pencil, Trash2, Filter, X, TrendingUp, TrendingDown, Search } fro
 import './MovimentacoesPage.css'
 
 const CATEGORIAS_RECEITA = ['Salário','Freelance','Investimentos','Vendas','Aluguel','Outros']
-const CATEGORIAS_DESPESA = ['Alimentação','Moradia','Transporte','Saúde','Educação','Lazer','Roupas','Tecnologia','Assinaturas','Outros']
+const CATEGORIAS_DESPESA = ['Alimentação','Moradia','Transporte','Saúde','Educação','Lazer','Roupas','Tecnologia','Assinaturas','Cartão de Crédito','Empréstimo','Outros']
 
 const initForm = {
   tipo: 'Despesa', valor: '', categoria: '', descricao: '',
