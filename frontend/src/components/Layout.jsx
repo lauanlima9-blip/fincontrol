@@ -84,6 +84,9 @@ export default function Layout() {
 
       <main className="main-content">
         <Outlet />
+        <footer className="page-footer">
+          © 2026 PinnacleBI — Criado por Lauan De Lima. Todos os direitos reservados.
+        </footer>
       </main>
     </div>
   )
