@@ -18,24 +18,20 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 10080
 
 bearer_scheme = HTTPBearer()
 
-
 def hash_senha(senha: str) -> str:
     senha_bytes = senha.encode("utf-8")[:72]
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(senha_bytes, salt).decode("utf-8")
 
-
 def verificar_senha(senha_plain: str, senha_hash: str) -> bool:
     senha_bytes = senha_plain.encode("utf-8")[:72]
     return bcrypt.checkpw(senha_bytes, senha_hash.encode("utf-8"))
-
 
 def criar_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-
 
 def get_usuario_atual(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),

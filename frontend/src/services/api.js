@@ -1,18 +1,18 @@
 import axios from 'axios'
 
+const BASE_URL = import.meta.env.VITE_API_URL || ''
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Injeta token em cada requisição
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('fincontrol_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-// Redireciona para login se 401
 api.interceptors.response.use(
   (res) => res,
   (err) => {
@@ -27,14 +27,12 @@ api.interceptors.response.use(
 
 export default api
 
-// ── Usuários ─────────────────────────────────────────────────────────────────
 export const authService = {
   cadastrar: (dados) => api.post('/usuarios/cadastro', dados),
   login: (dados) => api.post('/usuarios/login', dados),
   perfil: () => api.get('/usuarios/me'),
 }
 
-// ── Movimentações ─────────────────────────────────────────────────────────────
 export const movimentacoesService = {
   listar: (params) => api.get('/movimentacoes/', { params }),
   criar: (dados) => api.post('/movimentacoes/', dados),
@@ -42,7 +40,6 @@ export const movimentacoesService = {
   excluir: (id) => api.delete(`/movimentacoes/${id}`),
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────────
 export const dashboardService = {
   resumo: (params) => api.get('/dashboard/resumo', { params }),
   categorias: () => api.get('/dashboard/categorias'),
