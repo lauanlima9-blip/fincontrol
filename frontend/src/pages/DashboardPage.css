@@ -27,6 +27,12 @@
   margin-top: 0.25rem;
 }
 
+.filters-header {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .year-select {
   background: var(--bg-elevated);
   border: 1px solid var(--border);

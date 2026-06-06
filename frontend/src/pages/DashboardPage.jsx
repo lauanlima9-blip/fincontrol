@@ -18,20 +18,39 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 
 const COLORS = ['#00e5a0','#4d9fff','#ffd166','#b57bee','#ff6b9d','#ff9f40','#36a2eb','#ff6384']
 
+const MESES = [
+  { value: '', label: 'Todos os meses' },
+  { value: 1, label: 'Janeiro' },
+  { value: 2, label: 'Fevereiro' },
+  { value: 3, label: 'Março' },
+  { value: 4, label: 'Abril' },
+  { value: 5, label: 'Maio' },
+  { value: 6, label: 'Junho' },
+  { value: 7, label: 'Julho' },
+  { value: 8, label: 'Agosto' },
+  { value: 9, label: 'Setembro' },
+  { value: 10, label: 'Outubro' },
+  { value: 11, label: 'Novembro' },
+  { value: 12, label: 'Dezembro' },
+]
+
 export default function DashboardPage() {
   const { usuario } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [ano, setAno] = useState(new Date().getFullYear())
+  const [mes, setMes] = useState(new Date().getMonth() + 1)
 
   useEffect(() => {
     loadDashboard()
-  }, [ano])
+  }, [ano, mes])
 
   const loadDashboard = async () => {
     setLoading(true)
     try {
-      const res = await dashboardService.resumo({ ano })
+      const params = { ano }
+      if (mes) params.mes = mes
+      const res = await dashboardService.resumo(params)
       setData(res.data)
     } catch {}
     finally { setLoading(false) }
@@ -111,6 +130,7 @@ export default function DashboardPage() {
   }
 
   const saldo = data?.saldo ?? 0
+  const mesLabel = MESES.find(m => m.value === mes)?.label || 'Todos os meses'
 
   return (
     <div className="dashboard fade-in">
@@ -119,15 +139,26 @@ export default function DashboardPage() {
           <h1>Dashboard</h1>
           <p className="page-desc">Olá, {usuario?.nome?.split(' ')[0]}! Aqui está seu resumo financeiro.</p>
         </div>
-        <select
-          className="year-select"
-          value={ano}
-          onChange={e => setAno(+e.target.value)}
-        >
-          {[2022,2023,2024,2025,2026].map(y => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+        <div className="filters-header">
+          <select
+            className="year-select"
+            value={mes}
+            onChange={e => setMes(e.target.value ? +e.target.value : '')}
+          >
+            {MESES.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+          <select
+            className="year-select"
+            value={ano}
+            onChange={e => setAno(+e.target.value)}
+          >
+            {[2022,2023,2024,2025,2026].map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Cards */}
