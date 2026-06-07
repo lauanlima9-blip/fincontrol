@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import extract
 from pydantic import BaseModel, field_validator
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from database import get_db
 from auth import get_usuario_atual
 import models
@@ -44,6 +45,44 @@ class MetaFinanceiraResponse(MetaFinanceiraCreate):
     faltam: float = 0
     data_criacao: datetime
     model_config = {"from_attributes": True}
+
+
+
+class MetaValorPayload(BaseModel):
+    valor: float
+    usar_sobra_mes_anterior: bool = False
+
+    @field_validator("valor")
+    @classmethod
+    def valor_positivo(cls, v):
+        if v <= 0:
+            raise ValueError("Informe um valor positivo")
+        return v
+
+def saldo_mes_anterior(db: Session, usuario_id: int):
+    hoje = datetime.utcnow()
+    ano = hoje.year
+    mes = hoje.month - 1
+    if mes == 0:
+        mes = 12
+        ano -= 1
+    movs = db.query(models.Movimentacao).filter(
+        models.Movimentacao.usuario_id == usuario_id,
+        extract("month", models.Movimentacao.data_movimentacao) == mes,
+        extract("year", models.Movimentacao.data_movimentacao) == ano,
+    ).all()
+    receitas = sum(float(m.valor or 0) for m in movs if m.tipo == models.TipoMovimentacao.receita)
+    despesas = sum(float(m.valor or 0) for m in movs if m.tipo == models.TipoMovimentacao.despesa)
+    return max(receitas - despesas, 0)
+
+def buscar_meta(db: Session, usuario_id: int, id: int):
+    meta = db.query(models.MetaFinanceira).filter(
+        models.MetaFinanceira.id == id,
+        models.MetaFinanceira.usuario_id == usuario_id
+    ).first()
+    if not meta:
+        raise HTTPException(status_code=404, detail="Meta financeira não encontrada")
+    return meta
 
 class SimulacaoCreate(BaseModel):
     valor_mensal: float
@@ -110,6 +149,53 @@ def excluir_meta(id: int, db: Session = Depends(get_db), usuario_atual: models.U
         raise HTTPException(status_code=404, detail="Meta financeira não encontrada")
     db.delete(meta)
     db.commit()
+
+
+
+@router.post("/metas/{id}/aporte")
+def adicionar_valor_meta(id: int, dados: MetaValorPayload, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+    meta = buscar_meta(db, usuario_atual.id, id)
+    sobra = saldo_mes_anterior(db, usuario_atual.id) if dados.usar_sobra_mes_anterior else 0
+    valor_total = float(dados.valor or 0) + float(sobra or 0)
+    meta.valor_atual = min(float(meta.valor_atual or 0) + valor_total, float(meta.valor_desejado or 0))
+    mov = models.Movimentacao(
+        usuario_id=usuario_atual.id,
+        tipo=models.TipoMovimentacao.despesa,
+        valor=valor_total,
+        categoria="Metas Financeiras",
+        descricao=f"Meta - {meta.nome}",
+        data_movimentacao=datetime.utcnow(),
+        recorrente=False,
+    )
+    db.add(mov)
+    db.commit()
+    db.refresh(meta)
+    return {"meta": enriquecer_meta(meta), "movimentacao_id": mov.id, "valor_lancado": valor_total, "sobra_usada": sobra}
+
+@router.post("/metas/{id}/retirada")
+def retirar_valor_meta(id: int, dados: MetaValorPayload, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+    meta = buscar_meta(db, usuario_atual.id, id)
+    valor = min(float(dados.valor or 0), float(meta.valor_atual or 0))
+    if valor <= 0:
+        raise HTTPException(status_code=400, detail="Esta meta não possui saldo para retirada")
+    meta.valor_atual = max(float(meta.valor_atual or 0) - valor, 0)
+    mov = models.Movimentacao(
+        usuario_id=usuario_atual.id,
+        tipo=models.TipoMovimentacao.receita,
+        valor=valor,
+        categoria="Metas Financeiras",
+        descricao=f"Retirada da meta - {meta.nome}",
+        data_movimentacao=datetime.utcnow(),
+        recorrente=False,
+    )
+    db.add(mov)
+    db.commit()
+    db.refresh(meta)
+    return {"meta": enriquecer_meta(meta), "movimentacao_id": mov.id, "valor_retirado": valor}
+
+@router.get("/sobra-mes-anterior")
+def obter_sobra_mes_anterior(db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+    return {"sobra": saldo_mes_anterior(db, usuario_atual.id)}
 
 @router.post("/simulacoes", status_code=201)
 def criar_simulacao(dados: SimulacaoCreate, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
