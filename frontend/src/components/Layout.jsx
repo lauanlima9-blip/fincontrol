@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal } from 'lucide-react'
 import logo from '../assets/pinnacle_logo.png'
+import ErrorBoundary from './ErrorBoundary'
 import './Layout.css'
 
 const navItems = [
@@ -38,6 +39,6 @@ export default function Layout() {
         <button className="btn-logout" onClick={handleLogout}><LogOut size={16} /><span>Sair</span></button>
       </div>
     </aside>
-    <main className="main-content"><Outlet /><footer className="page-footer"><img src={logo} alt="PinnacleBI" className="footer-logo" /><span>© 2026 Pinnacle BI — Controle financeiro pessoal moderno.</span><a href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer">Instagram</a></footer></main>
+    <main className="main-content"><ErrorBoundary><Outlet /></ErrorBoundary><footer className="page-footer"><img src={logo} alt="PinnacleBI" className="footer-logo" /><span>© 2026 Pinnacle BI — Controle financeiro pessoal moderno.</span><a href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer">Instagram</a></footer></main>
   </div>
 }

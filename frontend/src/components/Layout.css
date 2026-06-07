@@ -271,3 +271,33 @@
   letter-spacing: 0.02em;
 }
 .theme-toggle,.instagram-link{display:flex;align-items:center;gap:.5rem;width:100%;padding:.65rem .75rem;border-radius:var(--radius-sm);background:var(--bg-elevated);color:var(--text-secondary);font-size:.82rem;border:1px solid var(--border);margin-bottom:.6rem;transition:.2s}.theme-toggle:hover,.instagram-link:hover{color:var(--accent-green);border-color:var(--border-accent)}.page-footer a{color:var(--accent-green);font-weight:700}
+
+/* Correções de usabilidade do menu lateral */
+.sidebar { overflow: hidden; }
+.sidebar-nav {
+  overflow-y: auto;
+  min-height: 0;
+  padding-bottom: 0.75rem;
+}
+.sidebar-footer {
+  flex-shrink: 0;
+  max-height: 42vh;
+  overflow-y: auto;
+  background: var(--bg-surface);
+}
+.instagram-link { line-height: 1.25; }
+.btn-logout {
+  width: 100%;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+@media (max-height: 720px) {
+  .sidebar-header { padding: 0.85rem 1rem; }
+  .sidebar-logo { height: 30px; }
+  .nav-item { padding: 0.5rem 0.75rem; font-size: 0.82rem; }
+  .sidebar-footer { gap: 0.45rem; padding: 0.65rem 0.75rem; max-height: 36vh; }
+  .user-info { display: none; }
+  .instagram-link { display: none; }
+  .theme-toggle { margin-bottom: 0; }
+}
