@@ -3,41 +3,76 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models, schemas
 from auth import hash_senha, verificar_senha, criar_token, get_usuario_atual
-from datetime import timedelta
+from datetime import datetime
+import secrets
+import random
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
 
-@router.post("/cadastro", response_model=schemas.Token, status_code=status.HTTP_201_CREATED)
+def _token_response(usuario: models.Usuario):
+    token = criar_token({"sub": str(usuario.id)})
+    return {"access_token": token, "token_type": "bearer", "usuario": usuario}
+
+
+def _gerar_codigo_2fa():
+    return str(random.randint(100000, 999999))
+
+
+@router.post("/cadastro", status_code=status.HTTP_201_CREATED)
 def cadastrar(usuario_data: schemas.UsuarioCreate, db: Session = Depends(get_db)):
     existente = db.query(models.Usuario).filter(models.Usuario.email == usuario_data.email).first()
     if existente:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="E-mail já cadastrado"
-        )
-    novo = models.Usuario(
-        nome=usuario_data.nome,
-        email=usuario_data.email,
-        senha_hash=hash_senha(usuario_data.senha),
-    )
+        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+    novo = models.Usuario(nome=usuario_data.nome, email=usuario_data.email, senha_hash=hash_senha(usuario_data.senha))
     db.add(novo)
     db.commit()
     db.refresh(novo)
-    token = criar_token({"sub": str(novo.id)})
-    return {"access_token": token, "token_type": "bearer", "usuario": novo}
+    return _token_response(novo)
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login")
 def login(dados: schemas.LoginRequest, db: Session = Depends(get_db)):
     usuario = db.query(models.Usuario).filter(models.Usuario.email == dados.email).first()
     if not usuario or not verificar_senha(dados.senha, usuario.senha_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="E-mail ou senha incorretos"
-        )
-    token = criar_token({"sub": str(usuario.id)})
-    return {"access_token": token, "token_type": "bearer", "usuario": usuario}
+        raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
+
+    if getattr(usuario, "two_factor_enabled", False):
+        if not dados.codigo_2fa:
+            usuario.codigo_2fa = _gerar_codigo_2fa()
+            db.commit()
+            # Em produção, enviar este código por e-mail. Em desenvolvimento, retornamos o código para teste.
+            return {"requires_2fa": True, "mensagem": "Código de verificação enviado para o e-mail cadastrado.", "codigo_dev": usuario.codigo_2fa}
+        if dados.codigo_2fa != usuario.codigo_2fa:
+            raise HTTPException(status_code=401, detail="Código de verificação inválido")
+        usuario.codigo_2fa = None
+        db.commit()
+
+    return _token_response(usuario)
+
+
+@router.post("/esqueci-senha")
+def esqueci_senha(dados: schemas.EsqueciSenhaRequest, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.email == dados.email).first()
+    # Resposta neutra para não revelar se o e-mail existe.
+    if not usuario:
+        return {"mensagem": "Se o e-mail estiver cadastrado, enviaremos instruções de recuperação."}
+    usuario.reset_token = secrets.token_urlsafe(32)
+    db.commit()
+    # Em produção, enviar link por e-mail. Em desenvolvimento, retornamos o token para teste.
+    return {"mensagem": "Token de redefinição gerado. Configure envio por e-mail em produção.", "token_dev": usuario.reset_token}
+
+
+@router.post("/redefinir-senha")
+def redefinir_senha(dados: schemas.RedefinirSenhaRequest, db: Session = Depends(get_db)):
+    usuario = db.query(models.Usuario).filter(models.Usuario.reset_token == dados.token).first()
+    if not usuario:
+        raise HTTPException(status_code=400, detail="Token inválido ou expirado")
+    usuario.senha_hash = hash_senha(dados.nova_senha)
+    usuario.reset_token = None
+    usuario.codigo_2fa = None
+    db.commit()
+    return {"mensagem": "Senha redefinida com sucesso"}
 
 
 @router.get("/me", response_model=schemas.UsuarioResponse)
@@ -46,11 +81,7 @@ def perfil(usuario_atual: models.Usuario = Depends(get_usuario_atual)):
 
 
 @router.put("/me", response_model=schemas.UsuarioResponse)
-def atualizar_perfil(
-    dados: schemas.PerfilUpdate,
-    db: Session = Depends(get_db),
-    usuario_atual: models.Usuario = Depends(get_usuario_atual)
-):
+def atualizar_perfil(dados: schemas.PerfilUpdate, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
     payload = dados.model_dump(exclude_unset=True)
     if payload.get("nome"):
         usuario_atual.nome = payload["nome"].strip()
@@ -65,6 +96,9 @@ def atualizar_perfil(
         usuario_atual.tema_preferido = payload.get("tema_preferido")
     if "notificacoes_ativas" in payload:
         usuario_atual.notificacoes_ativas = bool(payload.get("notificacoes_ativas"))
+    if "two_factor_enabled" in payload:
+        usuario_atual.two_factor_enabled = bool(payload.get("two_factor_enabled"))
+        usuario_atual.codigo_2fa = None
     if payload.get("nova_senha"):
         if not verificar_senha(payload.get("senha_atual", ""), usuario_atual.senha_hash):
             raise HTTPException(status_code=400, detail="Senha atual incorreta")

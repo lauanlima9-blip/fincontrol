@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from typing import Optional, Any
 from datetime import datetime
 from enum import Enum
+import re
 
 
 class TipoMovimentacao(str, Enum):
@@ -29,9 +30,8 @@ class UsuarioCreate(BaseModel):
 
     @field_validator("senha")
     @classmethod
-    def senha_minima(cls, v):
-        if len(v) < 6:
-            raise ValueError("Senha deve ter ao menos 6 caracteres")
+    def senha_forte(cls, v):
+        validar_senha_forte(v)
         return v
 
 
@@ -43,6 +43,7 @@ class UsuarioResponse(BaseModel):
     foto_perfil: Optional[str] = None
     tema_preferido: Optional[str] = "dark"
     notificacoes_ativas: Optional[bool] = True
+    two_factor_enabled: Optional[bool] = False
     model_config = {"from_attributes": True}
 
 
@@ -52,22 +53,47 @@ class PerfilUpdate(BaseModel):
     foto_perfil: Optional[str] = None
     tema_preferido: Optional[str] = None
     notificacoes_ativas: Optional[bool] = None
+    two_factor_enabled: Optional[bool] = None
     senha_atual: Optional[str] = None
     nova_senha: Optional[str] = None
 
     @model_validator(mode="after")
     def validar_senha(self):
         if self.nova_senha:
-            if len(self.nova_senha) < 6:
-                raise ValueError("A nova senha deve ter ao menos 6 caracteres")
+            validar_senha_forte(self.nova_senha)
             if not self.senha_atual:
                 raise ValueError("Informe a senha atual para alterar a senha")
         return self
 
 
+def validar_senha_forte(senha: str):
+    letras = len(re.findall(r"[A-Za-zÀ-ÿ]", senha or ""))
+    especiais = len(re.findall(r"[^A-Za-z0-9À-ÿ]", senha or ""))
+    numeros = len(re.findall(r"[0-9]", senha or ""))
+    if len(senha or "") < 8 or letras < 2 or especiais < 1 or numeros < 1:
+        raise ValueError("A senha deve ter no mínimo 8 caracteres, duas letras, um número e um caractere especial")
+    return True
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     senha: str
+    codigo_2fa: Optional[str] = None
+
+
+class EsqueciSenhaRequest(BaseModel):
+    email: EmailStr
+
+
+class RedefinirSenhaRequest(BaseModel):
+    token: str
+    nova_senha: str
+
+    @field_validator("nova_senha")
+    @classmethod
+    def nova_senha_forte(cls, v):
+        validar_senha_forte(v)
+        return v
 
 
 class Token(BaseModel):

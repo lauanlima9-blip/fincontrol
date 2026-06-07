@@ -5,7 +5,6 @@ const AuthContext = createContext()
 export const useAuth = () => useContext(AuthContext)
 
 const clearUserSessionData = () => {
-  // Mantém preferências visuais, mas remove dados de sessão do usuário anterior.
   localStorage.removeItem('fincontrol_token')
   localStorage.removeItem('fincontrol_usuario')
 }
@@ -31,7 +30,11 @@ export function AuthProvider({ children }) {
     return data.usuario
   }
 
-  const login = async (email, senha) => { const { data } = await authService.login({ email, senha }); return salvarSessao(data) }
+  const login = async (email, senha, codigo_2fa = '') => {
+    const { data } = await authService.login({ email, senha, codigo_2fa: codigo_2fa || null })
+    if (data.requires_2fa) return data
+    return salvarSessao(data)
+  }
   const cadastrar = async (nome, email, senha) => { const { data } = await authService.cadastrar({ nome, email, senha }); return salvarSessao(data) }
   const logout = () => { clearUserSessionData(); setUsuario(null) }
 

@@ -27,6 +27,9 @@ class Usuario(Base):
     foto_perfil = Column(String(500), nullable=True)
     tema_preferido = Column(String(20), default="dark", nullable=False)
     notificacoes_ativas = Column(Boolean, default=True, nullable=False)
+    two_factor_enabled = Column(Boolean, default=False, nullable=False)
+    codigo_2fa = Column(String(10), nullable=True)
+    reset_token = Column(String(120), nullable=True, index=True)
 
 
     movimentacoes = relationship("Movimentacao", back_populates="usuario", cascade="all, delete-orphan")
