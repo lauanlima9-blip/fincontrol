@@ -1,13 +1,17 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal } from 'lucide-react'
 import logo from '../assets/pinnacle_logo.png'
 import './Layout.css'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/movimentacoes', icon: ArrowLeftRight, label: 'Movimentações' },
+  { to: '/cartoes', icon: CreditCard, label: 'Cartões' },
+  { to: '/parcelamentos', icon: SplitSquareHorizontal, label: 'Parcelamentos' },
+  { to: '/insights', icon: Brain, label: 'Insights IA' },
+  { to: '/importacao', icon: Upload, label: 'Importar Extrato' },
   { to: '/categorias', icon: Tags, label: 'Categorias' },
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios' },
   { to: '/perfil', icon: User, label: 'Perfil' },

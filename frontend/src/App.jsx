@@ -8,6 +8,11 @@ import MovimentacoesPage from './pages/MovimentacoesPage'
 import RelatoriosPage from './pages/RelatoriosPage'
 import CategoriasPage from './pages/CategoriasPage'
 import PerfilPage from './pages/PerfilPage'
+import LandingPage from './pages/LandingPage'
+import CartoesPage from './pages/CartoesPage'
+import ParcelamentosPage from './pages/ParcelamentosPage'
+import InsightsPage from './pages/InsightsPage'
+import ImportacaoPage from './pages/ImportacaoPage'
 
 function PrivateRoute({ children }) {
   const { usuario, loading } = useAuth()
@@ -26,14 +31,18 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/cadastro" element={<PublicRoute><CadastroPage /></PublicRoute>} />
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-            <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="movimentacoes" element={<MovimentacoesPage />} />
             <Route path="relatorios" element={<RelatoriosPage />} />
             <Route path="categorias" element={<CategoriasPage />} />
+            <Route path="cartoes" element={<CartoesPage />} />
+            <Route path="parcelamentos" element={<ParcelamentosPage />} />
+            <Route path="insights" element={<InsightsPage />} />
+            <Route path="importacao" element={<ImportacaoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

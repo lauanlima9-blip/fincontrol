@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime
 from enum import Enum
 
@@ -108,6 +108,7 @@ class MovimentacaoCreate(BaseModel):
     recorrente: bool = False
     frequencia: Optional[FrequenciaRecorrencia] = None
     proxima_data_lancamento: Optional[datetime] = None
+    cartao_id: Optional[int] = None
 
     @field_validator("valor")
     @classmethod
@@ -139,6 +140,7 @@ class MovimentacaoUpdate(BaseModel):
     recorrente: Optional[bool] = None
     frequencia: Optional[FrequenciaRecorrencia] = None
     proxima_data_lancamento: Optional[datetime] = None
+    cartao_id: Optional[int] = None
 
 
 class MovimentacaoResponse(BaseModel):
@@ -153,6 +155,11 @@ class MovimentacaoResponse(BaseModel):
     frequencia: Optional[FrequenciaRecorrencia]
     proxima_data_lancamento: Optional[datetime]
     recorrencia_origem_id: Optional[int]
+    cartao_id: Optional[int] = None
+    parcelamento_id: Optional[int] = None
+    numero_parcela: Optional[int] = None
+    total_parcelas: Optional[int] = None
+    pago: bool = False
     data_criacao: datetime
     model_config = {"from_attributes": True}
 
@@ -172,3 +179,88 @@ class FiltroMovimentacao(BaseModel):
     ano: Optional[int] = None
     categoria: Optional[str] = None
     tipo: Optional[TipoMovimentacao] = None
+
+
+class StatusCartao(str, Enum):
+    ativo = "Ativo"
+    inativo = "Inativo"
+
+class CartaoCreditoBase(BaseModel):
+    nome: str
+    banco_emissor: str
+    bandeira: str
+    limite_total: float
+    dia_fechamento: int
+    dia_vencimento: int
+    cor: str = "#00e5a0"
+    status: StatusCartao = StatusCartao.ativo
+
+    @field_validator("limite_total")
+    @classmethod
+    def limite_positivo(cls, v):
+        if v <= 0: raise ValueError("Limite deve ser positivo")
+        return v
+
+    @field_validator("dia_fechamento", "dia_vencimento")
+    @classmethod
+    def dia_valido(cls, v):
+        if v < 1 or v > 31: raise ValueError("Dia deve estar entre 1 e 31")
+        return v
+
+class CartaoCreditoCreate(CartaoCreditoBase): pass
+class CartaoCreditoUpdate(BaseModel):
+    nome: Optional[str] = None
+    banco_emissor: Optional[str] = None
+    bandeira: Optional[str] = None
+    limite_total: Optional[float] = None
+    dia_fechamento: Optional[int] = None
+    dia_vencimento: Optional[int] = None
+    cor: Optional[str] = None
+    status: Optional[StatusCartao] = None
+
+class CartaoCreditoResponse(CartaoCreditoBase):
+    id: int
+    usuario_id: int
+    limite_utilizado: float = 0
+    limite_disponivel: float = 0
+    percentual_utilizado: float = 0
+    proxima_fatura: float = 0
+    data_criacao: datetime
+    model_config = {"from_attributes": True}
+
+class ParcelamentoCreate(BaseModel):
+    descricao: str
+    categoria: str
+    valor_total: float
+    quantidade_parcelas: int
+    tem_juros: bool = False
+    juros_percentual: float = 0
+    data_primeira_parcela: datetime
+    cartao_id: Optional[int] = None
+
+class ParcelamentoResponse(BaseModel):
+    id: int
+    descricao: str
+    categoria: str
+    valor_total: float
+    quantidade_parcelas: int
+    valor_parcela: float
+    tem_juros: bool
+    juros_percentual: float
+    data_primeira_parcela: datetime
+    cartao_id: Optional[int]
+    quitado: bool
+    parcelas_pagas: int = 0
+    parcelas_restantes: int = 0
+    valor_restante: float = 0
+    model_config = {"from_attributes": True}
+
+class InsightResponse(BaseModel):
+    id: int
+    mes: int
+    ano: int
+    titulo: str
+    resumo: str
+    indicadores: Optional[Any] = None
+    data_criacao: datetime
+    model_config = {"from_attributes": True}

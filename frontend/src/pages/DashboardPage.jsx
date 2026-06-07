@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { dashboardService, metasService } from '../services/api'
+import { dashboardService, metasService, cartoesService, parcelamentosService } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -31,6 +31,8 @@ export default function DashboardPage() {
   const [showMetaModal, setShowMetaModal] = useState(false)
   const [editingMeta, setEditingMeta] = useState(null)
   const [metaForm, setMetaForm] = useState({ descricao: '', valor_meta: '', mes: new Date().getMonth() + 1, ano: new Date().getFullYear() })
+  const [cartoesGastos, setCartoesGastos] = useState([])
+  const [parcelasResumo, setParcelasResumo] = useState({})
 
   useEffect(() => { loadDashboard(); loadMetas() }, [ano, mes])
 
@@ -41,6 +43,8 @@ export default function DashboardPage() {
       if (mes) params.mes = mes
       const res = await dashboardService.resumo(params)
       setData(res.data)
+      const gastos = await cartoesService.gastos(params); setCartoesGastos(gastos.data)
+      const parcelas = await parcelamentosService.resumo(); setParcelasResumo(parcelas.data)
     } catch {} finally { setLoading(false) }
   }
 
@@ -150,7 +154,17 @@ export default function DashboardPage() {
           <div className="kpi-icon"><Repeat size={20} /></div>
           <div className="kpi-content"><span className="kpi-label">Recorrentes ativas</span><span className="kpi-value">{data?.recorrentes_ativas ?? 0}</span></div>
         </div>
+        <div className="kpi-card kpi-purple">
+          <div className="kpi-icon"><Wallet size={20} /></div>
+          <div className="kpi-content"><span className="kpi-label">Parcelas do mês</span><span className="kpi-value">{fmt(parcelasResumo?.parcelas_mes_atual)}</span></div>
+        </div>
+        <div className="kpi-card kpi-green">
+          <div className="kpi-icon"><Activity size={20} /></div>
+          <div className="kpi-content"><span className="kpi-label">Gastos no cartão</span><span className="kpi-value">{fmt(cartoesGastos.reduce((s,c)=>s+c.total,0))}</span></div>
+        </div>
       </div>
+
+      {cartoesGastos.length > 0 && <div className="chart-card"><h3>Gastos por Cartão</h3><div className="pie-legend">{cartoesGastos.map((c)=><div key={c.cartao_id} className="legend-item"><span className="legend-dot" style={{background:c.cor}}/><span className="legend-label">{c.nome}</span><span className="legend-value">{fmt(c.total)}</span></div>)}</div></div>}
 
       {/* Metas */}
       <div className="metas-section">

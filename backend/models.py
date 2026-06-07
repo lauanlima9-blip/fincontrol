@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum, Boolean, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
@@ -28,6 +28,9 @@ class Usuario(Base):
     movimentacoes = relationship("Movimentacao", back_populates="usuario", cascade="all, delete-orphan")
     metas = relationship("Meta", back_populates="usuario", cascade="all, delete-orphan")
     categorias = relationship("Categoria", back_populates="usuario", cascade="all, delete-orphan")
+    cartoes = relationship("CartaoCredito", back_populates="usuario", cascade="all, delete-orphan")
+    parcelamentos = relationship("Parcelamento", back_populates="usuario", cascade="all, delete-orphan")
+    insights = relationship("InsightIA", back_populates="usuario", cascade="all, delete-orphan")
 
 
 class Categoria(Base):
@@ -57,9 +60,17 @@ class Movimentacao(Base):
     frequencia = Column(Enum(FrequenciaRecorrencia), nullable=True)
     proxima_data_lancamento = Column(DateTime(timezone=True), nullable=True)
     recorrencia_origem_id = Column(Integer, ForeignKey("movimentacoes.id"), nullable=True)
+    cartao_id = Column(Integer, ForeignKey("cartoes_credito.id"), nullable=True)
+    parcelamento_id = Column(Integer, ForeignKey("parcelamentos.id"), nullable=True)
+    numero_parcela = Column(Integer, nullable=True)
+    total_parcelas = Column(Integer, nullable=True)
+    pago = Column(Boolean, default=False, nullable=False)
+    hash_importacao = Column(String(120), nullable=True, index=True)
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="movimentacoes", foreign_keys=[usuario_id])
+    cartao = relationship("CartaoCredito", back_populates="movimentacoes")
+    parcelamento = relationship("Parcelamento", back_populates="parcelas")
 
 
 class Meta(Base):
@@ -74,3 +85,65 @@ class Meta(Base):
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="metas")
+
+
+
+class StatusCartao(str, enum.Enum):
+    ativo = "Ativo"
+    inativo = "Inativo"
+
+
+class CartaoCredito(Base):
+    __tablename__ = "cartoes_credito"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    nome = Column(String(100), nullable=False)
+    banco_emissor = Column(String(100), nullable=False)
+    bandeira = Column(String(50), nullable=False)
+    limite_total = Column(Float, nullable=False)
+    dia_fechamento = Column(Integer, nullable=False)
+    dia_vencimento = Column(Integer, nullable=False)
+    cor = Column(String(20), default="#00e5a0", nullable=False)
+    status = Column(Enum(StatusCartao), default=StatusCartao.ativo, nullable=False)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+    usuario = relationship("Usuario", back_populates="cartoes")
+    movimentacoes = relationship("Movimentacao", back_populates="cartao")
+
+
+class Parcelamento(Base):
+    __tablename__ = "parcelamentos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    cartao_id = Column(Integer, ForeignKey("cartoes_credito.id"), nullable=True)
+    descricao = Column(String(255), nullable=False)
+    categoria = Column(String(100), nullable=False)
+    valor_total = Column(Float, nullable=False)
+    quantidade_parcelas = Column(Integer, nullable=False)
+    valor_parcela = Column(Float, nullable=False)
+    tem_juros = Column(Boolean, default=False, nullable=False)
+    juros_percentual = Column(Float, default=0, nullable=False)
+    data_primeira_parcela = Column(DateTime(timezone=True), nullable=False)
+    quitado = Column(Boolean, default=False, nullable=False)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+    usuario = relationship("Usuario", back_populates="parcelamentos")
+    cartao = relationship("CartaoCredito")
+    parcelas = relationship("Movimentacao", back_populates="parcelamento")
+
+
+class InsightIA(Base):
+    __tablename__ = "insights_ia"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    mes = Column(Integer, nullable=False)
+    ano = Column(Integer, nullable=False)
+    titulo = Column(String(180), nullable=False)
+    resumo = Column(Text, nullable=False)
+    indicadores = Column(Text, nullable=True)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+    usuario = relationship("Usuario", back_populates="insights")
