@@ -6,6 +6,8 @@ import CadastroPage from './pages/CadastroPage'
 import DashboardPage from './pages/DashboardPage'
 import MovimentacoesPage from './pages/MovimentacoesPage'
 import RelatoriosPage from './pages/RelatoriosPage'
+import CategoriasPage from './pages/CategoriasPage'
+import PerfilPage from './pages/PerfilPage'
 
 function PrivateRoute({ children }) {
   const { usuario, loading } = useAuth()
@@ -31,6 +33,8 @@ export default function App() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="movimentacoes" element={<MovimentacoesPage />} />
             <Route path="relatorios" element={<RelatoriosPage />} />
+            <Route path="categorias" element={<CategoriasPage />} />
+            <Route path="perfil" element={<PerfilPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

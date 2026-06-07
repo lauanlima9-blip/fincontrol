@@ -270,3 +270,4 @@
   color: var(--text-muted);
   letter-spacing: 0.02em;
 }
+.theme-toggle,.instagram-link{display:flex;align-items:center;gap:.5rem;width:100%;padding:.65rem .75rem;border-radius:var(--radius-sm);background:var(--bg-elevated);color:var(--text-secondary);font-size:.82rem;border:1px solid var(--border);margin-bottom:.6rem;transition:.2s}.theme-toggle:hover,.instagram-link:hover{color:var(--accent-green);border-color:var(--border-accent)}.page-footer a{color:var(--accent-green);font-weight:700}

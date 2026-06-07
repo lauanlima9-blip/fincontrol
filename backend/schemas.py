@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -9,7 +9,11 @@ class TipoMovimentacao(str, Enum):
     despesa = "Despesa"
 
 
-# ─── Usuário ────────────────────────────────────────────────────────────────
+class FrequenciaRecorrencia(str, Enum):
+    semanal = "Semanal"
+    mensal = "Mensal"
+    anual = "Anual"
+
 
 class UsuarioCreate(BaseModel):
     nome: str
@@ -36,11 +40,23 @@ class UsuarioResponse(BaseModel):
     nome: str
     email: str
     data_criacao: datetime
-
     model_config = {"from_attributes": True}
 
 
-# ─── Auth ────────────────────────────────────────────────────────────────────
+class PerfilUpdate(BaseModel):
+    nome: Optional[str] = None
+    senha_atual: Optional[str] = None
+    nova_senha: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validar_senha(self):
+        if self.nova_senha:
+            if len(self.nova_senha) < 6:
+                raise ValueError("A nova senha deve ter ao menos 6 caracteres")
+            if not self.senha_atual:
+                raise ValueError("Informe a senha atual para alterar a senha")
+        return self
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -53,7 +69,35 @@ class Token(BaseModel):
     usuario: UsuarioResponse
 
 
-# ─── Movimentação ────────────────────────────────────────────────────────────
+class CategoriaBase(BaseModel):
+    nome: str
+    tipo: Optional[TipoMovimentacao] = None
+
+    @field_validator("nome")
+    @classmethod
+    def nome_nao_vazio(cls, v):
+        if not v.strip():
+            raise ValueError("Nome da categoria não pode ser vazio")
+        return v.strip()
+
+
+class CategoriaCreate(CategoriaBase):
+    pass
+
+
+class CategoriaUpdate(CategoriaBase):
+    nome: Optional[str] = None
+
+
+class CategoriaResponse(BaseModel):
+    id: int
+    usuario_id: Optional[int]
+    nome: str
+    tipo: Optional[TipoMovimentacao]
+    padrao: bool
+    data_criacao: datetime
+    model_config = {"from_attributes": True}
+
 
 class MovimentacaoCreate(BaseModel):
     tipo: TipoMovimentacao
@@ -61,6 +105,9 @@ class MovimentacaoCreate(BaseModel):
     categoria: str
     descricao: Optional[str] = None
     data_movimentacao: datetime
+    recorrente: bool = False
+    frequencia: Optional[FrequenciaRecorrencia] = None
+    proxima_data_lancamento: Optional[datetime] = None
 
     @field_validator("valor")
     @classmethod
@@ -76,6 +123,12 @@ class MovimentacaoCreate(BaseModel):
             raise ValueError("Categoria não pode ser vazia")
         return v.strip()
 
+    @model_validator(mode="after")
+    def validar_recorrencia(self):
+        if self.recorrente and not self.frequencia:
+            raise ValueError("Informe a frequência da movimentação recorrente")
+        return self
+
 
 class MovimentacaoUpdate(BaseModel):
     tipo: Optional[TipoMovimentacao] = None
@@ -83,6 +136,9 @@ class MovimentacaoUpdate(BaseModel):
     categoria: Optional[str] = None
     descricao: Optional[str] = None
     data_movimentacao: Optional[datetime] = None
+    recorrente: Optional[bool] = None
+    frequencia: Optional[FrequenciaRecorrencia] = None
+    proxima_data_lancamento: Optional[datetime] = None
 
 
 class MovimentacaoResponse(BaseModel):
@@ -93,18 +149,20 @@ class MovimentacaoResponse(BaseModel):
     categoria: str
     descricao: Optional[str]
     data_movimentacao: datetime
+    recorrente: bool
+    frequencia: Optional[FrequenciaRecorrencia]
+    proxima_data_lancamento: Optional[datetime]
+    recorrencia_origem_id: Optional[int]
     data_criacao: datetime
-
     model_config = {"from_attributes": True}
 
-
-# ─── Dashboard ───────────────────────────────────────────────────────────────
 
 class DashboardSummary(BaseModel):
     total_receitas: float
     total_despesas: float
     saldo: float
     quantidade_movimentacoes: int
+    recorrentes_ativas: int
     por_categoria: dict
     mensal: list
 

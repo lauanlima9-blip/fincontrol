@@ -356,3 +356,4 @@
   .movs-table th:nth-child(4),
   .movs-table td:nth-child(4) { display: none; }
 }
+.recurring-box{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.8rem}.recurring-box label{color:var(--text-primary);cursor:pointer}.recurring-box input{margin-right:.5rem}.badge svg{margin-right:.25rem}.charts-grid .chart-card{min-width:0}@media(max-width:900px){.charts-grid{grid-template-columns:1fr!important}}

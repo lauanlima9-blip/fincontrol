@@ -2,11 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 import models
-from routes import usuarios, movimentacoes, dashboard, metas
+from migrations_runtime import aplicar_migracoes_simples
+from routes import usuarios, movimentacoes, dashboard, metas, categorias
 
 Base.metadata.create_all(bind=engine)
+aplicar_migracoes_simples()
 
-app = FastAPI(title="FinControl API", version="1.0.0")
+app = FastAPI(title="Pinnacle Finance API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,10 +22,11 @@ app.include_router(usuarios.router)
 app.include_router(movimentacoes.router)
 app.include_router(dashboard.router)
 app.include_router(metas.router)
+app.include_router(categorias.router)
 
 @app.get("/")
 def root():
-    return {"mensagem": "FinControl API esta rodando!", "docs": "/docs"}
+    return {"mensagem": "Pinnacle Finance API está rodando!", "docs": "/docs"}
 
 @app.get("/health")
 def health():

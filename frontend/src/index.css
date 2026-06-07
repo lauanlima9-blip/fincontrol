@@ -136,3 +136,7 @@ input, select, textarea {
     padding-top: 4.5rem;
   }
 }
+html[data-theme="light"]{--bg-base:#f4f7fb;--bg-surface:#ffffff;--bg-elevated:#eef3f8;--bg-card:#ffffff;--bg-input:#f8fafc;--text-primary:#101827;--text-secondary:#4b5565;--text-muted:#7a8495;--border:rgba(15,23,42,.10);--border-accent:rgba(0,181,126,.35);--shadow-card:0 6px 24px rgba(15,23,42,.08);--shadow-glow:0 0 40px rgba(0,181,126,.10)}
+html[data-theme="light"] body{background:var(--bg-base);color:var(--text-primary)}
+html[data-theme="light"] .modal-overlay{background:rgba(15,23,42,.35)}
+.field label{display:flex;align-items:center;gap:.35rem}

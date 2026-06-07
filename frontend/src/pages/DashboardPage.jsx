@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
 import { Doughnut, Bar } from 'react-chartjs-2'
-import { TrendingUp, TrendingDown, Wallet, Activity, ArrowUpRight, ArrowDownRight, Target, Pencil, X, Plus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, Activity, ArrowUpRight, ArrowDownRight, Target, Pencil, X, Plus, Repeat } from 'lucide-react'
 import './DashboardPage.css'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
@@ -145,6 +145,10 @@ export default function DashboardPage() {
         <div className="kpi-card kpi-purple">
           <div className="kpi-icon"><Activity size={20} /></div>
           <div className="kpi-content"><span className="kpi-label">Movimentações</span><span className="kpi-value">{data?.quantidade_movimentacoes ?? 0}</span></div>
+        </div>
+        <div className="kpi-card kpi-blue">
+          <div className="kpi-icon"><Repeat size={20} /></div>
+          <div className="kpi-content"><span className="kpi-label">Recorrentes ativas</span><span className="kpi-value">{data?.recorrentes_ativas ?? 0}</span></div>
         </div>
       </div>
 

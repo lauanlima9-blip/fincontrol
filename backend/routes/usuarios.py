@@ -47,12 +47,17 @@ def perfil(usuario_atual: models.Usuario = Depends(get_usuario_atual)):
 
 @router.put("/me", response_model=schemas.UsuarioResponse)
 def atualizar_perfil(
-    dados: dict,
+    dados: schemas.PerfilUpdate,
     db: Session = Depends(get_db),
     usuario_atual: models.Usuario = Depends(get_usuario_atual)
 ):
-    if "nome" in dados:
-        usuario_atual.nome = dados["nome"]
+    payload = dados.model_dump(exclude_unset=True)
+    if payload.get("nome"):
+        usuario_atual.nome = payload["nome"].strip()
+    if payload.get("nova_senha"):
+        if not verificar_senha(payload.get("senha_atual", ""), usuario_atual.senha_hash):
+            raise HTTPException(status_code=400, detail="Senha atual incorreta")
+        usuario_atual.senha_hash = hash_senha(payload["nova_senha"])
     db.commit()
     db.refresh(usuario_atual)
     return usuario_atual
