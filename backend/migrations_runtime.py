@@ -32,6 +32,13 @@ def aplicar_migracoes_simples():
     add_col("movimentacoes", cols, "pago", "BOOLEAN DEFAULT FALSE NOT NULL")
     add_col("movimentacoes", cols, "hash_importacao", "VARCHAR(120)")
 
+    tables = insp.get_table_names()
+    if "usuarios" in tables:
+        user_cols = {c["name"] for c in insp.get_columns("usuarios")}
+        add_col("usuarios", user_cols, "foto_perfil", "VARCHAR(500)")
+        add_col("usuarios", user_cols, "tema_preferido", "VARCHAR(20) DEFAULT 'dark' NOT NULL")
+        add_col("usuarios", user_cols, "notificacoes_ativas", "BOOLEAN DEFAULT TRUE NOT NULL")
+
     with engine.begin() as conn:
         for stmt in statements:
             conn.execute(text(stmt))

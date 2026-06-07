@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank, CalendarDays, Bell, Landmark, Settings, Crown } from 'lucide-react'
 import logo from '../assets/pinnacle_logo.png'
 import ErrorBoundary from './ErrorBoundary'
 import './Layout.css'
@@ -13,9 +13,14 @@ const navItems = [
   { to: '/parcelamentos', icon: SplitSquareHorizontal, label: 'Parcelamentos', help: 'Controle compras parceladas, parcelas futuras, parcelas pagas e valor comprometido por mês.' },
   { to: '/insights', icon: Brain, label: 'Insights IA', help: 'Análises automáticas sobre gastos, metas financeiras, cartões e parcelamentos. Sem consultas manuais.' },
   { to: '/simulador', icon: PiggyBank, label: 'Simulador', help: 'Planeje economias futuras, crie metas financeiras e acompanhe quanto falta para realizar seus objetivos.' },
+  { to: '/calendario', icon: CalendarDays, label: 'Calendário', help: 'Veja receitas, despesas, parcelas, vencimentos de cartões, metas e recorrências no calendário financeiro.' },
+  { to: '/notificacoes', icon: Bell, label: 'Notificações', help: 'Alertas inteligentes sobre faturas, limites, metas atrasadas e gastos acima da média.' },
+  { to: '/patrimonio', icon: Landmark, label: 'Patrimônio', help: 'Cadastre ativos e passivos para acompanhar seu patrimônio líquido.' },
   { to: '/importacao', icon: Upload, label: 'Importar Extrato', help: 'Importe extratos CSV ou Excel, revise a prévia, confirme categorias e evite lançamentos duplicados.' },
   { to: '/categorias', icon: Tags, label: 'Categorias', help: 'Crie e edite categorias personalizadas para organizar receitas e despesas do seu jeito.' },
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios', help: 'Acompanhe análises detalhadas, gráficos, indicadores e exportações para PDF.' },
+  { to: '/planos', icon: Crown, label: 'Planos', help: 'Veja o plano gratuito e a estrutura premium preparada para monetização.' },
+  { to: '/configuracoes', icon: Settings, label: 'Configurações', help: 'Altere dados da conta, tema, notificações, backup e exclusão de conta.' },
   { to: '/perfil', icon: User, label: 'Perfil', help: 'Atualize seus dados pessoais, senha e preferências da conta.' },
 ]
 

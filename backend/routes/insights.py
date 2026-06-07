@@ -38,16 +38,36 @@ def gerar(mes:int=Query(...,ge=1,le=12), ano:int=Query(...,ge=2000), db:Session=
     if metas:
         meta=metas[0]; pct=(despesas/meta.valor_meta*100) if meta.valor_meta else 0
         meta_msg='Você está próximo de atingir sua meta financeira.' if pct>=80 and pct<=100 else ('Sua meta foi ultrapassada.' if pct>100 else 'Você ainda tem boa margem dentro da sua meta financeira.')
-    cartoes=db.query(models.CartaoCredito).filter(models.CartaoCredito.usuario_id==usuario_atual.id).count()
+    cartoes_lista=db.query(models.CartaoCredito).filter(models.CartaoCredito.usuario_id==usuario_atual.id).all()
+    cartoes=len(cartoes_lista)
     parcelamentos=db.query(models.Parcelamento).filter(models.Parcelamento.usuario_id==usuario_atual.id, models.Parcelamento.quitado==False).count()
+    metas_fin=db.query(models.MetaFinanceira).filter(models.MetaFinanceira.usuario_id==usuario_atual.id).all()
+    meta_fin_msg='Nenhuma meta de objetivo cadastrada.'
+    if metas_fin:
+        principal=max(metas_fin, key=lambda m: (m.valor_atual/m.valor_desejado) if m.valor_desejado else 0)
+        pct_meta=(principal.valor_atual/principal.valor_desejado*100) if principal.valor_desejado else 0
+        faltam=max(0, principal.valor_desejado-principal.valor_atual)
+        meta_fin_msg=f"Sua meta {principal.nome} está em {pct_meta:.0f}% e faltam R$ {faltam:,.2f}."
+    ativos=sum(p.valor for p in db.query(models.PatrimonioItem).filter(models.PatrimonioItem.usuario_id==usuario_atual.id, models.PatrimonioItem.tipo==models.TipoPatrimonio.ativo).all())
+    passivos=sum(p.valor for p in db.query(models.PatrimonioItem).filter(models.PatrimonioItem.usuario_id==usuario_atual.id, models.PatrimonioItem.tipo==models.TipoPatrimonio.passivo).all())
+    patrimonio_liquido=ativos-passivos
+    limite_total=sum(c.limite_total for c in cartoes_lista)
+    uso_cartao=sum(m.valor for m in movs if m.cartao_id and m.tipo.value=='Despesa')
+    pct_cartao=(uso_cartao/limite_total*100) if limite_total else 0
+    score=100 - (20 if saldo<0 else 0) - (20 if pct_cartao>80 else 0) - (10 if parcelamentos>10 else 0) - (15 if receitas and despesas/receitas>0.8 else 0)
+    score=max(0,min(100,round(score)))
     linhas=[
       f"Sua categoria de maior gasto foi {maior[0]}, com R$ {maior[1]:,.2f}.",
       f"Seu saldo disponível {'aumentou' if var_saldo>=0 else 'reduziu'} {abs(var_saldo):.1f}% em relação ao mês anterior.",
       f"Se reduzir seus gastos com {'Lazer' if por_cat.get('Lazer',0)>0 else maior[0]} em 15%, poderá economizar aproximadamente R$ {(economia_lazer or economia_maior):,.2f} por mês.",
       meta_msg,
+      meta_fin_msg,
+      f"Você utilizou {pct_cartao:.0f}% do limite total dos cartões cadastrados.",
+      f"Seu Score Financeiro Pinnacle está em {score}/100.",
+      f"Seu patrimônio líquido cadastrado é de R$ {patrimonio_liquido:,.2f}.",
       f"Você possui {cartoes} cartão(ões) cadastrado(s) e {parcelamentos} parcelamento(s) ativo(s)."
     ]
-    indicadores={"receitas":receitas,"despesas":despesas,"saldo":saldo,"maior_categoria":maior[0],"valor_maior_categoria":maior[1],"variacao_saldo_percentual":var_saldo,"economia_sugerida":economia_lazer or economia_maior}
+    indicadores={"receitas":receitas,"despesas":despesas,"saldo":saldo,"maior_categoria":maior[0],"valor_maior_categoria":maior[1],"variacao_saldo_percentual":var_saldo,"economia_sugerida":economia_lazer or economia_maior,"score":score,"patrimonio_liquido":patrimonio_liquido,"uso_cartao_percentual":pct_cartao}
     insight=models.InsightIA(usuario_id=usuario_atual.id,mes=mes,ano=ano,titulo=f"Análise financeira {mes:02d}/{ano}",resumo='\n'.join(linhas),indicadores=json.dumps(indicadores, ensure_ascii=False))
     db.add(insight); db.commit(); db.refresh(insight)
     return {"id":insight.id,"mes":mes,"ano":ano,"titulo":insight.titulo,"resumo":insight.resumo,"indicadores":indicadores,"data_criacao":insight.data_criacao}

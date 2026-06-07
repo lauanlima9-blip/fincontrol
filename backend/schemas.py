@@ -40,11 +40,18 @@ class UsuarioResponse(BaseModel):
     nome: str
     email: str
     data_criacao: datetime
+    foto_perfil: Optional[str] = None
+    tema_preferido: Optional[str] = "dark"
+    notificacoes_ativas: Optional[bool] = True
     model_config = {"from_attributes": True}
 
 
 class PerfilUpdate(BaseModel):
     nome: Optional[str] = None
+    email: Optional[EmailStr] = None
+    foto_perfil: Optional[str] = None
+    tema_preferido: Optional[str] = None
+    notificacoes_ativas: Optional[bool] = None
     senha_atual: Optional[str] = None
     nova_senha: Optional[str] = None
 
@@ -262,5 +269,49 @@ class InsightResponse(BaseModel):
     titulo: str
     resumo: str
     indicadores: Optional[Any] = None
+    data_criacao: datetime
+    model_config = {"from_attributes": True}
+
+
+class NotificationResponse(BaseModel):
+    id: int
+    titulo: str
+    mensagem: str
+    lida: bool
+    tipo: str
+    data_referencia: Optional[datetime] = None
+    data_criacao: datetime
+    model_config = {"from_attributes": True}
+
+
+class PatrimonioCreate(BaseModel):
+    nome: str
+    categoria: str
+    tipo: str
+    valor: float
+    observacao: Optional[str] = None
+
+    @field_validator("nome", "categoria")
+    @classmethod
+    def texto_ok(cls, v):
+        if not str(v).strip():
+            raise ValueError("Campo obrigatório")
+        return str(v).strip()
+
+    @field_validator("valor")
+    @classmethod
+    def valor_ok(cls, v):
+        if v < 0:
+            raise ValueError("Valor não pode ser negativo")
+        return v
+
+
+class PatrimonioResponse(BaseModel):
+    id: int
+    nome: str
+    categoria: str
+    tipo: str
+    valor: float
+    observacao: Optional[str] = None
     data_criacao: datetime
     model_config = {"from_attributes": True}

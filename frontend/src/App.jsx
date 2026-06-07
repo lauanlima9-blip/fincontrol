@@ -14,6 +14,11 @@ import ParcelamentosPage from './pages/ParcelamentosPage'
 import InsightsPage from './pages/InsightsPage'
 import ImportacaoPage from './pages/ImportacaoPage'
 import SimuladorPage from './pages/SimuladorPage'
+import CalendarioPage from './pages/CalendarioPage'
+import NotificacoesPage from './pages/NotificacoesPage'
+import PatrimonioPage from './pages/PatrimonioPage'
+import ConfiguracoesPage from './pages/ConfiguracoesPage'
+import PlanosPage from './pages/PlanosPage'
 
 function PrivateRoute({ children }) {
   const { usuario, loading } = useAuth()
@@ -44,6 +49,11 @@ export default function App() {
             <Route path="parcelamentos" element={<ParcelamentosPage />} />
             <Route path="insights" element={<InsightsPage />} />
             <Route path="simulador" element={<SimuladorPage />} />
+            <Route path="calendario" element={<CalendarioPage />} />
+            <Route path="notificacoes" element={<NotificacoesPage />} />
+            <Route path="patrimonio" element={<PatrimonioPage />} />
+            <Route path="configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="planos" element={<PlanosPage />} />
             <Route path="importacao" element={<ImportacaoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Route>

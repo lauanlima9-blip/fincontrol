@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { dashboardService, metasService, cartoesService, parcelamentosService, planejamentoService } from '../services/api'
+import { dashboardService, metasService, cartoesService, parcelamentosService, planejamentoService, v2Service } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
 import { Doughnut, Bar } from 'react-chartjs-2'
-import { TrendingUp, TrendingDown, Wallet, Activity, ArrowUpRight, ArrowDownRight, Target, Pencil, X, Plus, Repeat } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, Activity, ArrowUpRight, ArrowDownRight, Target, Pencil, X, Plus, Repeat, ShieldCheck, Landmark } from 'lucide-react'
 import './DashboardPage.css'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
@@ -34,6 +34,8 @@ export default function DashboardPage() {
   const [cartoesGastos, setCartoesGastos] = useState([])
   const [parcelasResumo, setParcelasResumo] = useState({})
   const [metasFinanceiras, setMetasFinanceiras] = useState({})
+  const [scoreFinanceiro, setScoreFinanceiro] = useState(null)
+  const [patrimonio, setPatrimonio] = useState(null)
 
   useEffect(() => { loadDashboard(); loadMetas() }, [ano, mes])
 
@@ -47,6 +49,8 @@ export default function DashboardPage() {
       const gastos = await cartoesService.gastos(params); setCartoesGastos(gastos.data)
       const parcelas = await parcelamentosService.resumo(); setParcelasResumo(parcelas.data)
       try { const mf = await planejamentoService.resumo(); setMetasFinanceiras(mf.data) } catch { setMetasFinanceiras({}) }
+      try { const sc = await v2Service.score(); setScoreFinanceiro(sc.data) } catch { setScoreFinanceiro(null) }
+      try { const pt = await v2Service.patrimonio(); setPatrimonio(pt.data) } catch { setPatrimonio(null) }
     } catch {} finally { setLoading(false) }
   }
 
@@ -170,6 +174,18 @@ export default function DashboardPage() {
           <div className="kpi-icon"><Activity size={20} /></div>
           <div className="kpi-content"><span className="kpi-label">Gastos no cartão</span><span className="kpi-value">{fmt(cartoesGastos.reduce((s,c)=>s+c.total,0))}</span></div>
         </div>
+        {scoreFinanceiro && (
+          <div className="kpi-card kpi-green">
+            <div className="kpi-icon"><ShieldCheck size={20} /></div>
+            <div className="kpi-content"><span className="kpi-label">Score Financeiro</span><span className="kpi-value">{scoreFinanceiro.score}/100</span><small>{scoreFinanceiro.status}</small></div>
+          </div>
+        )}
+        {patrimonio && (
+          <div className="kpi-card kpi-blue">
+            <div className="kpi-icon"><Landmark size={20} /></div>
+            <div className="kpi-content"><span className="kpi-label">Patrimônio Total</span><span className="kpi-value">{fmt(patrimonio.patrimonio_liquido)}</span></div>
+          </div>
+        )}
       </div>
 
 

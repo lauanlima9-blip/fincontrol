@@ -54,6 +54,17 @@ def atualizar_perfil(
     payload = dados.model_dump(exclude_unset=True)
     if payload.get("nome"):
         usuario_atual.nome = payload["nome"].strip()
+    if payload.get("email") and payload["email"] != usuario_atual.email:
+        existente = db.query(models.Usuario).filter(models.Usuario.email == payload["email"]).first()
+        if existente:
+            raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+        usuario_atual.email = payload["email"]
+    if "foto_perfil" in payload:
+        usuario_atual.foto_perfil = payload.get("foto_perfil")
+    if "tema_preferido" in payload and payload.get("tema_preferido") in ["dark", "light"]:
+        usuario_atual.tema_preferido = payload.get("tema_preferido")
+    if "notificacoes_ativas" in payload:
+        usuario_atual.notificacoes_ativas = bool(payload.get("notificacoes_ativas"))
     if payload.get("nova_senha"):
         if not verificar_senha(payload.get("senha_atual", ""), usuario_atual.senha_hash):
             raise HTTPException(status_code=400, detail="Senha atual incorreta")
@@ -61,3 +72,9 @@ def atualizar_perfil(
     db.commit()
     db.refresh(usuario_atual)
     return usuario_atual
+
+
+@router.delete("/me", status_code=204)
+def excluir_conta(db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+    db.delete(usuario_atual)
+    db.commit()

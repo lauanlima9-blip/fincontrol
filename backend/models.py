@@ -24,6 +24,10 @@ class Usuario(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     senha_hash = Column(String(255), nullable=False)
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+    foto_perfil = Column(String(500), nullable=True)
+    tema_preferido = Column(String(20), default="dark", nullable=False)
+    notificacoes_ativas = Column(Boolean, default=True, nullable=False)
+
 
     movimentacoes = relationship("Movimentacao", back_populates="usuario", cascade="all, delete-orphan")
     metas = relationship("Meta", back_populates="usuario", cascade="all, delete-orphan")
@@ -33,6 +37,8 @@ class Usuario(Base):
     insights = relationship("InsightIA", back_populates="usuario", cascade="all, delete-orphan")
     metas_planejamento = relationship("MetaFinanceira", back_populates="usuario", cascade="all, delete-orphan")
     simulacoes = relationship("SimulacaoFinanceira", back_populates="usuario", cascade="all, delete-orphan")
+    notificacoes = relationship("Notification", back_populates="usuario", cascade="all, delete-orphan")
+    patrimonios = relationship("PatrimonioItem", back_populates="usuario", cascade="all, delete-orphan")
 
 
 class Categoria(Base):
@@ -177,3 +183,38 @@ class SimulacaoFinanceira(Base):
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="simulacoes")
+
+
+class TipoPatrimonio(str, enum.Enum):
+    ativo = "Ativo"
+    passivo = "Passivo"
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    titulo = Column(String(180), nullable=False)
+    mensagem = Column(Text, nullable=False)
+    lida = Column(Boolean, default=False, nullable=False)
+    tipo = Column(String(40), default="geral", nullable=False)
+    data_referencia = Column(DateTime(timezone=True), nullable=True)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+    usuario = relationship("Usuario", back_populates="notificacoes")
+
+
+class PatrimonioItem(Base):
+    __tablename__ = "patrimonio_itens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    nome = Column(String(140), nullable=False)
+    categoria = Column(String(80), nullable=False)
+    tipo = Column(Enum(TipoPatrimonio), nullable=False)
+    valor = Column(Float, nullable=False)
+    observacao = Column(String(255), nullable=True)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+    usuario = relationship("Usuario", back_populates="patrimonios")
