@@ -357,3 +357,15 @@
   .movs-table td:nth-child(4) { display: none; }
 }
 .recurring-box{background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.8rem}.recurring-box label{color:var(--text-primary);cursor:pointer}.recurring-box input{margin-right:.5rem}.badge svg{margin-right:.25rem}.charts-grid .chart-card{min-width:0}@media(max-width:900px){.charts-grid{grid-template-columns:1fr!important}}
+
+.card-payment-box{
+  background:linear-gradient(135deg, rgba(0,229,160,.08), rgba(77,159,255,.06));
+  border:1px solid var(--border-accent);
+  border-radius:var(--radius-sm);
+  padding:.9rem;
+}
+.card-payment-box>label{color:var(--text-primary);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:.5rem;}
+.card-payment-box input[type="checkbox"]{accent-color:var(--accent-green);}
+.card-select-area{margin-top:.8rem;display:flex;flex-direction:column;gap:.45rem;}
+.card-select-area small{color:var(--accent-red);line-height:1.4;}
+.badge-card{background:rgba(77,159,255,.12);color:var(--accent-blue);gap:.25rem;}

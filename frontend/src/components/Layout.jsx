@@ -65,7 +65,7 @@ export default function Layout() {
     <main className="main-content">
       <div className="help-topbar"><button type="button" className="help-center-btn" onClick={() => setHelpOpen(true)}><HelpCircle size={16}/> Centro de Ajuda</button></div>
       <ErrorBoundary><Outlet /></ErrorBoundary>
-      <footer className="page-footer"><img src={logo} alt="PinnacleBI" className="footer-logo" /><span>© 2026 Pinnacle BI — Controle financeiro pessoal moderno.</span><a href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer">Instagram</a></footer>
+      <footer className="page-footer"><img src={logo} alt="PinnacleBI" className="footer-logo" /><span>© 2026 Pinnacle BI — Controle financeiro pessoal moderno. Feito por Lauan De Lima.</span><a href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer">Instagram</a></footer>
     </main>
 
     {welcomeOpen && (

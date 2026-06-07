@@ -15,6 +15,21 @@ def _base_query(db: Session, usuario_id: int):
     return db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id == usuario_id)
 
 
+
+
+def _validar_cartao(db: Session, usuario_id: int, cartao_id: int | None):
+    if not cartao_id:
+        return None
+    cartao = db.query(models.CartaoCredito).filter(
+        models.CartaoCredito.id == cartao_id,
+        models.CartaoCredito.usuario_id == usuario_id,
+    ).first()
+    if not cartao:
+        raise HTTPException(status_code=400, detail="Cartão de crédito não encontrado para este usuário")
+    if cartao.status == models.StatusCartao.inativo:
+        raise HTTPException(status_code=400, detail="Este cartão está inativo")
+    return cartao
+
 def _somar_frequencia(data: datetime, frequencia):
     freq = frequencia.value if hasattr(frequencia, "value") else frequencia
     if freq == "Semanal":
@@ -65,6 +80,9 @@ def criar(dados: schemas.MovimentacaoCreate, db: Session = Depends(get_db), usua
     payload = dados.model_dump()
     if payload.get("recorrente") and not payload.get("proxima_data_lancamento"):
         payload["proxima_data_lancamento"] = _somar_frequencia(payload["data_movimentacao"], payload["frequencia"])
+    if payload.get("cartao_id") and payload.get("tipo") != schemas.TipoMovimentacao.despesa:
+        raise HTTPException(status_code=400, detail="Cartão de crédito só pode ser vinculado a despesas")
+    _validar_cartao(db, usuario_atual.id, payload.get("cartao_id"))
     nova = models.Movimentacao(**payload, usuario_id=usuario_atual.id)
     db.add(nova)
     db.commit()
@@ -115,6 +133,10 @@ def atualizar(id: int, dados: schemas.MovimentacaoUpdate, db: Session = Depends(
     payload = dados.model_dump(exclude_unset=True)
     if payload.get("recorrente") and payload.get("frequencia") and not payload.get("proxima_data_lancamento"):
         payload["proxima_data_lancamento"] = _somar_frequencia(payload.get("data_movimentacao") or mov.data_movimentacao, payload["frequencia"])
+    novo_tipo = payload.get("tipo", mov.tipo)
+    if payload.get("cartao_id") and novo_tipo != models.TipoMovimentacao.despesa and novo_tipo != schemas.TipoMovimentacao.despesa:
+        raise HTTPException(status_code=400, detail="Cartão de crédito só pode ser vinculado a despesas")
+    _validar_cartao(db, usuario_atual.id, payload.get("cartao_id"))
     for campo, valor in payload.items():
         setattr(mov, campo, valor)
     db.commit()
