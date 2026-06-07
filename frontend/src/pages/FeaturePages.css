@@ -96,3 +96,14 @@
 .benefits-list span{padding:.55rem .75rem;border-radius:999px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.18);color:var(--accent-green);font-weight:700;font-size:.86rem}
 .contact-card strong,.contact-card a{font-size:1.15rem;color:var(--accent-green);font-weight:800}
 .institucional-page .feature-card p svg{vertical-align:middle;margin-right:.4rem;color:var(--accent-green)}
+
+/* Navegação consistente para páginas legais abertas a partir do login/cadastro */
+.legal-top-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  margin-bottom:1rem;
+}
+.legal-top-actions .btn-cancel{
+  width:auto;
+}

@@ -1,7 +1,15 @@
+import { Link, useSearchParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import './FeaturePages.css'
 
 export default function PrivacidadePage(){
+  const [searchParams] = useSearchParams()
+  const from = searchParams.get('from')
+  const backTo = from === 'cadastro' ? '/cadastro' : from === 'login' ? '/login' : '/'
+  const backText = from === 'cadastro' ? 'Voltar para criar conta' : from === 'login' ? 'Voltar para login' : 'Voltar para o site'
+
   return <div className="feature-page institucional-page fade-in">
+    <div className="legal-top-actions"><Link to={backTo} className="btn-cancel"><ArrowLeft size={16}/> {backText}</Link></div>
     <div className="page-header"><div><h1>Política de Privacidade</h1><p className="page-desc">Como tratamos os dados cadastrados no Pinnacle Finance.</p></div></div>
     <section className="feature-card legal-text">
       <h2>1. Dados coletados</h2><p>Podemos coletar nome, e-mail, senha protegida por criptografia, informações financeiras cadastradas pelo usuário e dados necessários para funcionamento da plataforma.</p>

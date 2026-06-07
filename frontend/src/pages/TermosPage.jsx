@@ -1,7 +1,15 @@
+import { Link, useSearchParams } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import './FeaturePages.css'
 
 export default function TermosPage(){
+  const [searchParams] = useSearchParams()
+  const from = searchParams.get('from')
+  const backTo = from === 'cadastro' ? '/cadastro' : from === 'login' ? '/login' : '/'
+  const backText = from === 'cadastro' ? 'Voltar para criar conta' : from === 'login' ? 'Voltar para login' : 'Voltar para o site'
+
   return <div className="feature-page institucional-page fade-in">
+    <div className="legal-top-actions"><Link to={backTo} className="btn-cancel"><ArrowLeft size={16}/> {backText}</Link></div>
     <div className="page-header"><div><h1>Termos de Uso</h1><p className="page-desc">Última atualização: 2026.</p></div></div>
     <section className="feature-card legal-text">
       <h2>1. Aceitação dos termos</h2><p>Ao utilizar o Pinnacle Finance, você concorda com estes Termos de Uso e com a Política de Privacidade.</p>
