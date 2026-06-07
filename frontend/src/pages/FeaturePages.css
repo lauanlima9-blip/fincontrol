@@ -26,3 +26,36 @@
 .modal-form{display:flex;flex-direction:column;gap:.9rem}.modal-form .field{display:flex;flex-direction:column;gap:.35rem}.modal-form label{color:var(--text-secondary);font-size:.86rem}.modal-actions{display:flex;justify-content:flex-end;gap:.75rem;margin-top:.5rem;padding-top:1rem;border-top:1px solid var(--border)}
 .btn-cancel,.btn-save,.btn-clear,.btn-add{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;border-radius:10px;padding:.75rem 1rem;font-weight:700}.btn-save,.btn-add{background:var(--accent-green);color:#02140f}.btn-cancel,.btn-clear{background:var(--bg-elevated);color:var(--text-secondary);border:1px solid var(--border)}.btn-danger{background:var(--accent-red-dim);color:var(--accent-red);border:1px solid rgba(255,77,109,.25);border-radius:10px;padding:.75rem 1rem;font-weight:700}.page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}.page-desc{color:var(--text-secondary);margin-top:.25rem}.filters-header{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:1rem;display:flex;flex-direction:column;gap:.35rem}.kpi-card span{color:var(--text-secondary);font-size:.85rem}.kpi-card b{font-size:1.25rem}.table-card{overflow-x:auto;background:var(--bg-card);border:1px solid var(--border);border-radius:18px}.movs-table{width:100%;border-collapse:collapse}.movs-table th,.movs-table td{padding:.85rem 1rem;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}.movs-table th{color:var(--text-secondary);font-size:.78rem;text-transform:uppercase}.empty-state{background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:2rem;text-align:center;color:var(--text-secondary)}.empty-state h2,.empty-state h3{color:var(--text-primary);margin-bottom:.5rem}.error-state{border-color:rgba(255,77,109,.35)}
 @media(max-width:768px){.modal-overlay{align-items:flex-start;padding:76px 14px 20px}.modal{max-height:calc(100vh - 96px);padding:1rem}.page-header{flex-direction:column}.modal-actions{position:sticky;bottom:0;background:var(--bg-surface);padding-bottom:.25rem}.filters-header{width:100%}.filters-header>*{flex:1}.btn-save,.btn-cancel,.btn-clear,.btn-add{width:100%}.movs-table th,.movs-table td{padding:.7rem}}
+
+/* Correção definitiva: páginas com modais não podem manter transform da animação,
+   porque isso altera o comportamento do position: fixed dentro do modal. */
+.feature-page.fade-in{animation:none !important;transform:none !important;}
+
+.modal-overlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:99999 !important;
+  background:rgba(2,6,14,.78);
+  backdrop-filter:blur(6px);
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:24px;
+  overflow-y:auto;
+}
+.modal{
+  position:relative;
+  width:min(600px,100%);
+  max-height:calc(100vh - 48px);
+  overflow-y:auto;
+  margin:0 auto;
+  background:var(--bg-surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:0 28px 80px rgba(0,0,0,.65);
+  padding:1.25rem;
+}
+.modal-form{gap:.75rem;}
+.modal-form .page-header{position:sticky;top:-1.25rem;background:var(--bg-surface);z-index:2;padding:.25rem 0 .75rem;border-bottom:1px solid var(--border);}
+.modal-form .field input,.modal-form .field select{min-height:44px;}
+@media(max-width:768px){.modal-overlay{padding:72px 12px 18px}.modal{max-height:calc(100vh - 90px);}}

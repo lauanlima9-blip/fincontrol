@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pinnacle-finance-v2'
+const CACHE_NAME = 'pinnacle-finance-v3-help-fix'
 const APP_SHELL = ['/', '/manifest.json', '/pinnacle_logo.png']
 
 self.addEventListener('install', event => {
