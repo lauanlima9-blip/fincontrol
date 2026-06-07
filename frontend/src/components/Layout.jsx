@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank, CalendarDays, Bell, Landmark, Settings, Crown } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank, CalendarDays, Bell, Landmark, Settings, Crown, Info, FileText, Shield, Phone } from 'lucide-react'
 import logo from '../assets/pinnacle_logo.png'
 import ErrorBoundary from './ErrorBoundary'
 import './Layout.css'
@@ -21,6 +21,10 @@ const navItems = [
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios', help: 'Acompanhe análises detalhadas, gráficos, indicadores e exportações para PDF.' },
   { to: '/planos', icon: Crown, label: 'Planos', help: 'Veja o plano gratuito e a estrutura premium preparada para monetização.' },
   { to: '/configuracoes', icon: Settings, label: 'Configurações', help: 'Altere dados da conta, tema, notificações, backup e exclusão de conta.' },
+  { to: '/sobre', icon: Info, label: 'Sobre', help: 'Conheça o Pinnacle Finance, sua missão, contato oficial e quem desenvolveu o projeto.' },
+  { to: '/termos', icon: FileText, label: 'Termos', help: 'Veja os Termos de Uso da plataforma.' },
+  { to: '/privacidade', icon: Shield, label: 'Privacidade', help: 'Entenda como seus dados são tratados e protegidos.' },
+  { to: '/contato', icon: Phone, label: 'Contato', help: 'Fale com o suporte pelo e-mail oficial e Instagram.' },
   { to: '/perfil', icon: User, label: 'Perfil', help: 'Atualize seus dados pessoais, senha e preferências da conta.' },
 ]
 
@@ -70,7 +74,7 @@ export default function Layout() {
     <main className="main-content">
       <div className="help-topbar"><button type="button" className="help-center-btn" onClick={() => setHelpOpen(true)}><HelpCircle size={16}/> Centro de Ajuda</button></div>
       <ErrorBoundary><Outlet /></ErrorBoundary>
-      <footer className="page-footer"><img src={logo} alt="PinnacleBI" className="footer-logo" /><span>© 2026 Pinnacle BI — Controle financeiro pessoal moderno. Feito por Lauan De Lima.</span><a href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer">Instagram</a></footer>
+      <footer className="page-footer"><img src={logo} alt="PinnacleBI" className="footer-logo" /><span>© 2026 Pinnacle BI — Controle financeiro pessoal moderno. Feito por Lauan De Lima.</span><NavLink to="/termos">Termos de Uso</NavLink><NavLink to="/privacidade">Política de Privacidade</NavLink><NavLink to="/contato">Contato</NavLink><a href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer">@pinnacle.bi</a></footer>
     </main>
 
     {welcomeOpen && (

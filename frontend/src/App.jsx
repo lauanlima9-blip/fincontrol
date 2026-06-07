@@ -19,6 +19,10 @@ import NotificacoesPage from './pages/NotificacoesPage'
 import PatrimonioPage from './pages/PatrimonioPage'
 import ConfiguracoesPage from './pages/ConfiguracoesPage'
 import PlanosPage from './pages/PlanosPage'
+import SobrePage from './pages/SobrePage'
+import TermosPage from './pages/TermosPage'
+import PrivacidadePage from './pages/PrivacidadePage'
+import ContatoPage from './pages/ContatoPage'
 
 function PrivateRoute({ children }) {
   const { usuario, loading } = useAuth()
@@ -40,6 +44,10 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/cadastro" element={<PublicRoute><CadastroPage /></PublicRoute>} />
+          <Route path="/sobre" element={<SobrePage />} />
+          <Route path="/termos" element={<TermosPage />} />
+          <Route path="/privacidade" element={<PrivacidadePage />} />
+          <Route path="/contato" element={<ContatoPage />} />
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="movimentacoes" element={<MovimentacoesPage />} />
@@ -55,6 +63,10 @@ export default function App() {
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
             <Route path="planos" element={<PlanosPage />} />
             <Route path="importacao" element={<ImportacaoPage />} />
+            <Route path="sobre" element={<SobrePage />} />
+            <Route path="termos" element={<TermosPage />} />
+            <Route path="privacidade" element={<PrivacidadePage />} />
+            <Route path="contato" element={<ContatoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

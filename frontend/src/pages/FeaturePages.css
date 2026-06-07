@@ -86,3 +86,13 @@
 }
 .card-x:hover { background: rgba(255,92,122,.14); border-color: rgba(255,92,122,.35); }
 .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:10px;margin-top:18px}.calendar-day{min-height:120px;border:1px solid var(--border);background:var(--card);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:6px}.event-pill{font-size:11px;border-radius:999px;padding:5px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.event-income{color:#00e5a0;background:rgba(0,229,160,.12)}.event-expense{color:#ff4d6d;background:rgba(255,77,109,.12)}.event-goal{color:#4d9fff;background:rgba(77,159,255,.12)}.event-card{color:#b57bee;background:rgba(181,123,238,.12)}.event-installment{color:#ff9f40;background:rgba(255,159,64,.12)}.table-list{display:flex;flex-direction:column;gap:10px}.table-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025)}.table-row p{margin:.25rem 0;color:var(--muted)}.table-row small{color:var(--muted)}.muted-row{opacity:.62}.quick-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.btn-danger{border:0;border-radius:12px;padding:11px 14px;background:rgba(255,77,109,.15);color:#ff4d6d;font-weight:700;display:inline-flex;gap:8px;align-items:center;cursor:pointer}.file-label{cursor:pointer}.pricing-grid{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:18px}.plan-card{display:flex;flex-direction:column;gap:12px}.plan-card strong{font-size:32px}.plan-card p{display:flex;gap:8px;align-items:center;color:var(--text)}.plan-card.premium{border-color:rgba(0,229,160,.35);box-shadow:0 20px 60px rgba(0,229,160,.08)}@media(max-width:900px){.calendar-grid{grid-template-columns:repeat(2,1fr)}.pricing-grid{grid-template-columns:1fr}.table-row{align-items:flex-start;flex-direction:column}}
+
+
+/* Páginas institucionais */
+.institucional-page .feature-card p{line-height:1.65;color:var(--text-secondary)}
+.legal-text h2{font-size:1.05rem;margin:1rem 0 .25rem;color:var(--text-primary)}
+.legal-text h2:first-child{margin-top:0}
+.benefits-list{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:.5rem}
+.benefits-list span{padding:.55rem .75rem;border-radius:999px;background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.18);color:var(--accent-green);font-weight:700;font-size:.86rem}
+.contact-card strong,.contact-card a{font-size:1.15rem;color:var(--accent-green);font-weight:800}
+.institucional-page .feature-card p svg{vertical-align:middle;margin-right:.4rem;color:var(--accent-green)}

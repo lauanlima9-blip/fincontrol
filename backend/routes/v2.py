@@ -15,7 +15,9 @@ def fmt_event(nome, categoria, valor, data, tipo):
     return {'nome': nome, 'categoria': categoria, 'valor': float(valor or 0), 'data': data.isoformat() if data else None, 'tipo': tipo}
 
 @router.get('/calendario')
-def calendario(mes:int|None=None, ano:int|None=None, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def calendario(mes:int|None=None, ano:int|None=None, response: Response=None, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+    if response is not None:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     hoje=datetime.now(); mes=mes or hoje.month; ano=ano or hoje.year
     eventos=[]
     movs=db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id==usuario_atual.id, extract('month', models.Movimentacao.data_movimentacao)==mes, extract('year', models.Movimentacao.data_movimentacao)==ano).all()

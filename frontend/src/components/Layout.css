@@ -332,3 +332,6 @@
 .video-help-box strong{color:var(--text-primary);}
 .video-help-box svg{color:var(--accent-green);flex-shrink:0;}
 @media(max-width:768px){.help-topbar{margin-top:64px}.tour-overlay{padding:14px}.tour-modal,.help-modal{padding:1rem}.tour-bubble{left:14px;right:14px;top:72px;width:auto}.tour-actions .btn-save,.tour-actions .btn-cancel{width:auto;flex:1}.nav-help{opacity:1}}
+
+.page-footer a,.page-footer .active{color:var(--accent-green);font-weight:700;text-decoration:none}
+.page-footer a:hover{text-decoration:underline}
