@@ -13,6 +13,7 @@ import CartoesPage from './pages/CartoesPage'
 import ParcelamentosPage from './pages/ParcelamentosPage'
 import InsightsPage from './pages/InsightsPage'
 import ImportacaoPage from './pages/ImportacaoPage'
+import SimuladorPage from './pages/SimuladorPage'
 
 function PrivateRoute({ children }) {
   const { usuario, loading } = useAuth()
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="cartoes" element={<CartoesPage />} />
             <Route path="parcelamentos" element={<ParcelamentosPage />} />
             <Route path="insights" element={<InsightsPage />} />
+            <Route path="simulador" element={<SimuladorPage />} />
             <Route path="importacao" element={<ImportacaoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
           </Route>

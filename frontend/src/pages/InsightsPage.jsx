@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { insightsService } from '../services/api'
+import { insightsService, planejamentoService } from '../services/api'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import './FeaturePages.css'
@@ -12,12 +12,14 @@ export default function InsightsPage() {
   const [last, setLast] = useState(null)
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState('')
+  const [metas, setMetas] = useState([])
 
   const load = useCallback(async () => {
     setErro('')
     try {
       const r = await insightsService.historico()
       setItems(Array.isArray(r.data) ? r.data : [])
+      try { const m = await planejamentoService.metas(); setMetas(Array.isArray(m.data) ? m.data : []) } catch { setMetas([]) }
     } catch (e) {
       setItems([])
       setErro('Não foi possível carregar o histórico de análises. Verifique se o backend está online.')
@@ -68,6 +70,28 @@ export default function InsightsPage() {
       </div>
 
       {erro && <div className="empty-state error-state">{erro}</div>}
+
+      <div className="insight-box">
+        <h3>Análise automática das metas</h3>
+        {metas.length === 0 ? (
+          <p>Crie uma meta no Simulador Financeiro para receber análises como prazo estimado, valor faltante e oportunidades de economia.</p>
+        ) : metas.slice(0, 3).map((meta) => {
+          const progresso = Number(meta.progresso || 0)
+          const faltamPct = Math.max(100 - progresso, 0)
+          const faltamValor = Number(meta.faltam || 0)
+          const mesesEstimados = valorMes => valorMes > 0 ? Math.ceil(faltamValor / valorMes) : null
+          const estimativaAtual = mesesEstimados(300)
+          const estimativaAcelerada = mesesEstimados(450)
+          return (
+            <div className="auto-insight" key={meta.id}>
+              <h4>🎯 {meta.nome}</h4>
+              <p>Você está a apenas {faltamPct.toFixed(0)}% de concluir sua meta {meta.nome}.</p>
+              <p>Mantendo uma economia média de R$ 300 por mês, sua meta será alcançada em aproximadamente {estimativaAtual || 0} meses.</p>
+              <p>Se aumentar sua economia mensal em R$ 150, a meta será alcançada {Math.max((estimativaAtual || 0) - (estimativaAcelerada || 0), 0)} meses antes.</p>
+            </div>
+          )
+        })}
+      </div>
 
       {last && (
         <div className="insight-box">

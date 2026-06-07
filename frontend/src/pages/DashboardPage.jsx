@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { dashboardService, metasService, cartoesService, parcelamentosService } from '../services/api'
+import { dashboardService, metasService, cartoesService, parcelamentosService, planejamentoService } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const [metaForm, setMetaForm] = useState({ descricao: '', valor_meta: '', mes: new Date().getMonth() + 1, ano: new Date().getFullYear() })
   const [cartoesGastos, setCartoesGastos] = useState([])
   const [parcelasResumo, setParcelasResumo] = useState({})
+  const [metasFinanceiras, setMetasFinanceiras] = useState({})
 
   useEffect(() => { loadDashboard(); loadMetas() }, [ano, mes])
 
@@ -45,6 +46,7 @@ export default function DashboardPage() {
       setData(res.data)
       const gastos = await cartoesService.gastos(params); setCartoesGastos(gastos.data)
       const parcelas = await parcelamentosService.resumo(); setParcelasResumo(parcelas.data)
+      try { const mf = await planejamentoService.resumo(); setMetasFinanceiras(mf.data) } catch { setMetasFinanceiras({}) }
     } catch {} finally { setLoading(false) }
   }
 
@@ -163,6 +165,26 @@ export default function DashboardPage() {
           <div className="kpi-content"><span className="kpi-label">Gastos no cartão</span><span className="kpi-value">{fmt(cartoesGastos.reduce((s,c)=>s+c.total,0))}</span></div>
         </div>
       </div>
+
+
+      {metasFinanceiras?.proxima_meta && (
+        <div className="dashboard-goals">
+          <div className="dashboard-goal-card">
+            <div className="dashboard-goal-head">
+              <h3><Target size={18}/> Metas Financeiras</h3>
+              <span>{metasFinanceiras.quantidade || 0} meta(s) ativa(s)</span>
+            </div>
+            <div className="dashboard-goal-main">
+              <div>
+                <strong>{metasFinanceiras.proxima_meta.nome}</strong>
+                <p>{fmt(metasFinanceiras.proxima_meta.valor_atual)} / {fmt(metasFinanceiras.proxima_meta.valor_desejado)}</p>
+              </div>
+              <div className="dashboard-goal-percent">{Number(metasFinanceiras.proxima_meta.progresso || 0).toFixed(0)}%</div>
+            </div>
+            <div className="progress"><i style={{ width: `${Math.min(Number(metasFinanceiras.proxima_meta.progresso || 0), 100)}%` }} /></div>
+          </div>
+        </div>
+      )}
 
       {cartoesGastos.length > 0 && <div className="chart-card"><h3>Gastos por Cartão</h3><div className="pie-legend">{cartoesGastos.map((c)=><div key={c.cartao_id} className="legend-item"><span className="legend-dot" style={{background:c.cor}}/><span className="legend-label">{c.nome}</span><span className="legend-value">{fmt(c.total)}</span></div>)}</div></div>}
 

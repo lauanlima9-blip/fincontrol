@@ -31,6 +31,8 @@ class Usuario(Base):
     cartoes = relationship("CartaoCredito", back_populates="usuario", cascade="all, delete-orphan")
     parcelamentos = relationship("Parcelamento", back_populates="usuario", cascade="all, delete-orphan")
     insights = relationship("InsightIA", back_populates="usuario", cascade="all, delete-orphan")
+    metas_planejamento = relationship("MetaFinanceira", back_populates="usuario", cascade="all, delete-orphan")
+    simulacoes = relationship("SimulacaoFinanceira", back_populates="usuario", cascade="all, delete-orphan")
 
 
 class Categoria(Base):
@@ -147,3 +149,31 @@ class InsightIA(Base):
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="insights")
+
+
+class MetaFinanceira(Base):
+    __tablename__ = "metas_financeiras"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    nome = Column(String(140), nullable=False)
+    valor_desejado = Column(Float, nullable=False)
+    valor_atual = Column(Float, default=0, nullable=False)
+    data_prevista = Column(DateTime(timezone=True), nullable=True)
+    status = Column(String(30), default="Ativa", nullable=False)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+    usuario = relationship("Usuario", back_populates="metas_planejamento")
+
+
+class SimulacaoFinanceira(Base):
+    __tablename__ = "simulacoes_financeiras"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    valor_mensal = Column(Float, nullable=False)
+    periodo_meses = Column(Integer, nullable=False)
+    valor_final = Column(Float, nullable=False)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+    usuario = relationship("Usuario", back_populates="simulacoes")

@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank } from 'lucide-react'
 import logo from '../assets/pinnacle_logo.png'
 import ErrorBoundary from './ErrorBoundary'
 import './Layout.css'
@@ -11,7 +11,8 @@ const navItems = [
   { to: '/movimentacoes', icon: ArrowLeftRight, label: 'Movimentações', help: 'Cadastre e acompanhe suas receitas e despesas. Esses dados alimentam o dashboard e os relatórios.' },
   { to: '/cartoes', icon: CreditCard, label: 'Cartões', help: 'Gerencie cartões de crédito, limites, fechamento, vencimento, faturas e gastos por cartão.' },
   { to: '/parcelamentos', icon: SplitSquareHorizontal, label: 'Parcelamentos', help: 'Controle compras parceladas, parcelas futuras, parcelas pagas e valor comprometido por mês.' },
-  { to: '/insights', icon: Brain, label: 'Insights IA', help: 'Gere análises inteligentes sobre seus hábitos financeiros, categorias, metas, cartões e parcelamentos.' },
+  { to: '/insights', icon: Brain, label: 'Insights IA', help: 'Análises automáticas sobre gastos, metas financeiras, cartões e parcelamentos. Sem consultas manuais.' },
+  { to: '/simulador', icon: PiggyBank, label: 'Simulador', help: 'Planeje economias futuras, crie metas financeiras e acompanhe quanto falta para realizar seus objetivos.' },
   { to: '/importacao', icon: Upload, label: 'Importar Extrato', help: 'Importe extratos CSV ou Excel, revise a prévia, confirme categorias e evite lançamentos duplicados.' },
   { to: '/categorias', icon: Tags, label: 'Categorias', help: 'Crie e edite categorias personalizadas para organizar receitas e despesas do seu jeito.' },
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios', help: 'Acompanhe análises detalhadas, gráficos, indicadores e exportações para PDF.' },
