@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { insightsService, planejamentoService } from '../services/api'
+import { Trash2 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import './FeaturePages.css'
@@ -41,6 +42,17 @@ export default function InsightsPage() {
       setErro(e?.response?.data?.detail || 'Erro ao gerar análise IA.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function excluirAnalise(id) {
+    if (!confirm('Deseja excluir esta análise do histórico?')) return
+    try {
+      await insightsService.excluir(id)
+      if (last?.id === id) setLast(null)
+      await load()
+    } catch (e) {
+      setErro(e?.response?.data?.detail || 'Não foi possível excluir esta análise.')
     }
   }
 
@@ -104,7 +116,8 @@ export default function InsightsPage() {
       <h3>Histórico de análises</h3>
       <div className="feature-grid">
         {items.map((i) => (
-          <div className="feature-card insight" key={i.id}>
+          <div className="feature-card insight insight-card-removable" key={i.id}>
+            <button type="button" className="card-x" onClick={() => excluirAnalise(i.id)} title="Excluir análise"><Trash2 size={15}/></button>
             <h3>{i.titulo}</h3>
             {String(i.resumo || '').split('\n').slice(0, 4).map((l, k) => <p key={k}>{l}</p>)}
             <button type="button" className="btn-clear" onClick={() => pdf(i)}>PDF</button>

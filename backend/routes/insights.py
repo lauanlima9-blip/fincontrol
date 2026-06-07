@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
 from collections import defaultdict
@@ -51,3 +51,15 @@ def gerar(mes:int=Query(...,ge=1,le=12), ano:int=Query(...,ge=2000), db:Session=
     insight=models.InsightIA(usuario_id=usuario_atual.id,mes=mes,ano=ano,titulo=f"Análise financeira {mes:02d}/{ano}",resumo='\n'.join(linhas),indicadores=json.dumps(indicadores, ensure_ascii=False))
     db.add(insight); db.commit(); db.refresh(insight)
     return {"id":insight.id,"mes":mes,"ano":ano,"titulo":insight.titulo,"resumo":insight.resumo,"indicadores":indicadores,"data_criacao":insight.data_criacao}
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def excluir(id: int, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+    insight = db.query(models.InsightIA).filter(
+        models.InsightIA.id == id,
+        models.InsightIA.usuario_id == usuario_atual.id
+    ).first()
+    if not insight:
+        raise HTTPException(status_code=404, detail="Análise não encontrada")
+    db.delete(insight)
+    db.commit()

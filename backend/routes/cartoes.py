@@ -57,7 +57,7 @@ def atualizar(id: int, dados: schemas.CartaoCreditoUpdate, db: Session = Depends
 def excluir(id: int, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
     cartao = db.query(models.CartaoCredito).filter(models.CartaoCredito.id == id, models.CartaoCredito.usuario_id == usuario_atual.id).first()
     if not cartao: raise HTTPException(404, "Cartão não encontrado")
-    usado = db.query(models.Movimentacao).filter(models.Movimentacao.cartao_id == id).first()
+    usado = db.query(models.Movimentacao).filter(models.Movimentacao.cartao_id == id, models.Movimentacao.usuario_id == usuario_atual.id).first()
     if usado: raise HTTPException(400, "Este cartão possui gastos vinculados. Inative o cartão para preservar o histórico.")
     db.delete(cartao); db.commit()
 

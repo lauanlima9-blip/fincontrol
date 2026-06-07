@@ -72,8 +72,14 @@ export default function DashboardPage() {
   }
 
   const handleDeleteMeta = async (id) => {
-    await metasService.excluir(id)
-    loadMetas()
+    if (!confirm('Deseja excluir este orçamento do mês?')) return
+    try {
+      await metasService.excluir(id)
+      await loadMetas()
+      await loadDashboard()
+    } catch (e) {
+      alert(e?.response?.data?.detail || 'Não foi possível excluir este orçamento.')
+    }
   }
 
   const openEditMeta = (meta) => {
@@ -191,13 +197,13 @@ export default function DashboardPage() {
       {/* Metas */}
       <div className="metas-section">
         <div className="metas-header">
-          <div className="metas-title"><Target size={18} /><h3>Metas do Período</h3></div>
+          <div className="metas-title"><Target size={18} /><h3>Orçamento do Mês</h3></div>
           <button className="btn-add-meta" onClick={() => { setEditingMeta(null); setMetaForm({ descricao:'', valor_meta:'', mes: mes||new Date().getMonth()+1, ano }); setShowMetaModal(true) }}>
-            <Plus size={14} /> Nova Meta
+            <Plus size={14} /> Novo Orçamento
           </button>
         </div>
         {metas.length === 0 ? (
-          <p className="no-metas">Nenhuma meta definida para este período.</p>
+          <p className="no-metas">Nenhum orçamento definido para este mês.</p>
         ) : (
           <div className="metas-grid">
             {metas.map(meta => {
@@ -266,13 +272,13 @@ export default function DashboardPage() {
         <div className="modal-overlay" onClick={() => setShowMetaModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{editingMeta ? 'Editar Meta' : 'Nova Meta'}</h3>
+              <h3>{editingMeta ? 'Editar Meta' : 'Novo Orçamento'}</h3>
               <button className="btn-icon" onClick={() => setShowMetaModal(false)}><X size={18} /></button>
             </div>
             <form onSubmit={handleSaveMeta} className="modal-form">
               <div className="field">
                 <label>Descrição</label>
-                <input type="text" placeholder="Ex: Limite de gastos do mês" value={metaForm.descricao}
+                <input type="text" placeholder="Ex: Alimentação, Lazer ou Economia do mês" value={metaForm.descricao}
                   onChange={e => setMetaForm(p=>({...p,descricao:e.target.value}))} required />
               </div>
               <div className="field">
@@ -296,7 +302,7 @@ export default function DashboardPage() {
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn-cancel" onClick={() => setShowMetaModal(false)}>Cancelar</button>
-                <button type="submit" className="btn-save">{editingMeta ? 'Salvar' : 'Criar Meta'}</button>
+                <button type="submit" className="btn-save">{editingMeta ? 'Salvar' : 'Criar Orçamento'}</button>
               </div>
             </form>
           </div>

@@ -66,3 +66,22 @@
 .leftover-box{display:flex;justify-content:space-between;align-items:center;gap:1rem;background:linear-gradient(145deg,rgba(77,159,255,.10),rgba(0,229,160,.08));border:1px solid rgba(77,159,255,.18);border-radius:14px;padding:.85rem 1rem;margin:.5rem 0 1rem;color:var(--text-secondary)}
 .leftover-box strong{color:var(--accent-green);font-size:1.15rem}.goal-money-box{margin-top:.3rem;padding:.9rem;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025);display:flex;flex-direction:column;gap:.55rem}.goal-money-box label{font-size:.85rem;color:var(--text-secondary)}.goal-money-row{display:grid;grid-template-columns:1fr auto auto;gap:.55rem;align-items:center}.goal-money-row input{width:100%;min-height:42px;border:1px solid var(--border);background:var(--bg-elevated);border-radius:10px;color:var(--text-primary);padding:0 .8rem}.checkbox-line{display:flex!important;align-items:center;gap:.5rem;line-height:1.4}.checkbox-line input{width:auto!important}.goal-money-box small{color:var(--text-secondary);line-height:1.45}.goal-money-box small b{color:var(--text-primary)}.success-state{border-color:rgba(0,229,160,.25)!important;background:rgba(0,229,160,.08)!important;color:var(--text-primary)}
 @media(max-width:768px){.goal-money-row{grid-template-columns:1fr}.goal-money-row .btn-save,.goal-money-row .btn-cancel{width:100%}.leftover-box{align-items:flex-start;flex-direction:column}}
+
+
+.insight-card-removable { position: relative; }
+.card-x {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  background: rgba(255,255,255,.04);
+  color: #ff5c7a;
+  cursor: pointer;
+}
+.card-x:hover { background: rgba(255,92,122,.14); border-color: rgba(255,92,122,.35); }
