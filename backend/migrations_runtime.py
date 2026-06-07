@@ -40,7 +40,9 @@ def aplicar_migracoes_simples():
         add_col("usuarios", user_cols, "notificacoes_ativas", "BOOLEAN DEFAULT TRUE NOT NULL")
         add_col("usuarios", user_cols, "two_factor_enabled", "BOOLEAN DEFAULT FALSE NOT NULL")
         add_col("usuarios", user_cols, "codigo_2fa", "VARCHAR(10)")
+        add_col("usuarios", user_cols, "codigo_2fa_expira_em", f"{dt}")
         add_col("usuarios", user_cols, "reset_token", "VARCHAR(120)")
+        add_col("usuarios", user_cols, "reset_token_expira_em", f"{dt}")
 
     with engine.begin() as conn:
         for stmt in statements:

@@ -29,7 +29,9 @@ class Usuario(Base):
     notificacoes_ativas = Column(Boolean, default=True, nullable=False)
     two_factor_enabled = Column(Boolean, default=False, nullable=False)
     codigo_2fa = Column(String(10), nullable=True)
+    codigo_2fa_expira_em = Column(DateTime(timezone=True), nullable=True)
     reset_token = Column(String(120), nullable=True, index=True)
+    reset_token_expira_em = Column(DateTime(timezone=True), nullable=True)
 
 
     movimentacoes = relationship("Movimentacao", back_populates="usuario", cascade="all, delete-orphan")

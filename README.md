@@ -41,3 +41,22 @@ VITE_API_URL=http://localhost:8000
 ## PWA
 
 Em produção com HTTPS, o navegador poderá exibir a opção de instalar o Pinnacle Finance no celular ou desktop.
+
+## Segurança de login e recuperação
+
+Esta versão remove a exposição de tokens e códigos no frontend.
+
+Para envio real de e-mails de recuperação de senha e 2FA, configure no backend `.env`:
+
+```env
+APP_URL=https://seu-frontend.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=pinnacleb109@gmail.com
+SMTP_PASSWORD=sua_senha_de_app_do_gmail
+SMTP_FROM=Pinnacle Finance <pinnacleb109@gmail.com>
+```
+
+No Gmail, crie uma **senha de app** para o SMTP. Não use sua senha normal da conta.
+
+O checkbox "Não sou um robô" permanece como validação local de interface. Para produção, configure Cloudflare Turnstile ou Google reCAPTCHA no backend e valide o token no servidor.

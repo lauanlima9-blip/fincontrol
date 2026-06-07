@@ -3,9 +3,11 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models, schemas
 from auth import hash_senha, verificar_senha, criar_token, get_usuario_atual
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import secrets
 import random
+import hashlib
+from email_utils import enviar_recuperacao_senha, enviar_codigo_2fa
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
@@ -17,6 +19,14 @@ def _token_response(usuario: models.Usuario):
 
 def _gerar_codigo_2fa():
     return str(random.randint(100000, 999999))
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _agora():
+    return datetime.now(timezone.utc)
 
 
 @router.post("/cadastro", status_code=status.HTTP_201_CREATED)
@@ -40,12 +50,23 @@ def login(dados: schemas.LoginRequest, db: Session = Depends(get_db)):
     if getattr(usuario, "two_factor_enabled", False):
         if not dados.codigo_2fa:
             usuario.codigo_2fa = _gerar_codigo_2fa()
+            usuario.codigo_2fa_expira_em = _agora() + timedelta(minutes=10)
             db.commit()
-            # Em produção, enviar este código por e-mail. Em desenvolvimento, retornamos o código para teste.
-            return {"requires_2fa": True, "mensagem": "Código de verificação enviado para o e-mail cadastrado.", "codigo_dev": usuario.codigo_2fa}
-        if dados.codigo_2fa != usuario.codigo_2fa:
+            enviar_codigo_2fa(usuario.email, usuario.codigo_2fa)
+            return {"requires_2fa": True, "mensagem": "Código de verificação enviado para o e-mail cadastrado."}
+        if not usuario.codigo_2fa or dados.codigo_2fa != usuario.codigo_2fa:
             raise HTTPException(status_code=401, detail="Código de verificação inválido")
+        if usuario.codigo_2fa_expira_em:
+            expira = usuario.codigo_2fa_expira_em
+            if expira.tzinfo is None:
+                expira = expira.replace(tzinfo=timezone.utc)
+            if expira < _agora():
+                usuario.codigo_2fa = None
+                usuario.codigo_2fa_expira_em = None
+                db.commit()
+                raise HTTPException(status_code=401, detail="Código expirado. Solicite login novamente.")
         usuario.codigo_2fa = None
+        usuario.codigo_2fa_expira_em = None
         db.commit()
 
     return _token_response(usuario)
@@ -55,22 +76,37 @@ def login(dados: schemas.LoginRequest, db: Session = Depends(get_db)):
 def esqueci_senha(dados: schemas.EsqueciSenhaRequest, db: Session = Depends(get_db)):
     usuario = db.query(models.Usuario).filter(models.Usuario.email == dados.email).first()
     # Resposta neutra para não revelar se o e-mail existe.
+    mensagem = "Se este e-mail estiver cadastrado, enviaremos instruções de recuperação."
     if not usuario:
-        return {"mensagem": "Se o e-mail estiver cadastrado, enviaremos instruções de recuperação."}
-    usuario.reset_token = secrets.token_urlsafe(32)
+        return {"mensagem": mensagem}
+    token = secrets.token_urlsafe(48)
+    usuario.reset_token = _hash_token(token)
+    usuario.reset_token_expira_em = _agora() + timedelta(minutes=30)
     db.commit()
-    # Em produção, enviar link por e-mail. Em desenvolvimento, retornamos o token para teste.
-    return {"mensagem": "Token de redefinição gerado. Configure envio por e-mail em produção.", "token_dev": usuario.reset_token}
+    enviar_recuperacao_senha(usuario.email, token)
+    return {"mensagem": mensagem}
 
 
 @router.post("/redefinir-senha")
 def redefinir_senha(dados: schemas.RedefinirSenhaRequest, db: Session = Depends(get_db)):
-    usuario = db.query(models.Usuario).filter(models.Usuario.reset_token == dados.token).first()
+    token_hash = _hash_token(dados.token)
+    usuario = db.query(models.Usuario).filter(models.Usuario.reset_token == token_hash).first()
     if not usuario:
         raise HTTPException(status_code=400, detail="Token inválido ou expirado")
+    if usuario.reset_token_expira_em:
+        expira = usuario.reset_token_expira_em
+        if expira.tzinfo is None:
+            expira = expira.replace(tzinfo=timezone.utc)
+        if expira < _agora():
+            usuario.reset_token = None
+            usuario.reset_token_expira_em = None
+            db.commit()
+            raise HTTPException(status_code=400, detail="Token inválido ou expirado")
     usuario.senha_hash = hash_senha(dados.nova_senha)
     usuario.reset_token = None
+    usuario.reset_token_expira_em = None
     usuario.codigo_2fa = None
+    usuario.codigo_2fa_expira_em = None
     db.commit()
     return {"mensagem": "Senha redefinida com sucesso"}
 
@@ -99,6 +135,7 @@ def atualizar_perfil(dados: schemas.PerfilUpdate, db: Session = Depends(get_db),
     if "two_factor_enabled" in payload:
         usuario_atual.two_factor_enabled = bool(payload.get("two_factor_enabled"))
         usuario_atual.codigo_2fa = None
+        usuario_atual.codigo_2fa_expira_em = None
     if payload.get("nova_senha"):
         if not verificar_senha(payload.get("senha_atual", ""), usuario_atual.senha_hash):
             raise HTTPException(status_code=400, detail="Senha atual incorreta")
