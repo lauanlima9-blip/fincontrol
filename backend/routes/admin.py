@@ -10,6 +10,7 @@ from auth import require_admin, criar_token, hash_senha
 router = APIRouter(prefix="/admin", tags=["Administração"])
 
 ADMIN_EMAIL = "pinnacleb109@gmail.com"
+SUPER_ADMIN_EMAIL = ADMIN_EMAIL
 PREMIUM_DEFAULT = 50.0
 
 
@@ -23,13 +24,29 @@ def log(db, admin, acao, descricao, request=None, user_id=None):
                             navegador=request.headers.get("user-agent") if request else None))
 
 
+def is_super_admin(usuario):
+    return bool(usuario and usuario.email and usuario.email.lower() == SUPER_ADMIN_EMAIL)
+
+
+def garantir_super_admin(usuario):
+    if is_super_admin(usuario):
+        usuario.role = "admin"
+        usuario.plano = "Premium"
+        usuario.status = "Ativo"
+    return usuario
+
+
+def bloquear_alteracao_super_admin(db, admin, target_user, request, descricao="Tentativa de alterar usuário protegido"):
+    if is_super_admin(target_user):
+        log(db, admin, "tentativa_modificacao_super_admin", descricao, request, target_user.id)
+        db.commit()
+        raise HTTPException(status_code=400, detail="Operação não permitida para Super Administrador")
+
+
 def ensure_defaults(db: Session):
     admin = db.query(models.Usuario).filter(func.lower(models.Usuario.email) == ADMIN_EMAIL).first()
     if admin:
-        admin.role = "admin"
-        admin.plano = "Premium"
-        if not admin.status:
-            admin.status = "Ativo"
+        garantir_super_admin(admin)
     if not db.query(models.SubscriptionPlan).filter(models.SubscriptionPlan.nome == "Gratuito").first():
         db.add(models.SubscriptionPlan(nome="Gratuito", valor=0, beneficios="Dashboard básico; Movimentações; Metas financeiras", status="Ativo"))
     if not db.query(models.SubscriptionPlan).filter(models.SubscriptionPlan.nome == "Premium").first():
@@ -89,7 +106,7 @@ def dashboard_admin(db: Session = Depends(get_db), admin=Depends(require_admin))
 def listar_usuarios(db: Session = Depends(get_db), admin=Depends(require_admin)):
     ensure_defaults(db)
     users = db.query(models.Usuario).order_by(models.Usuario.data_criacao.desc()).all()
-    return [{"id": u.id, "nome": u.nome, "email": u.email, "plano": u.plano, "role": u.role, "data_cadastro": u.data_criacao, "ultimo_acesso": u.ultimo_acesso, "status": u.status} for u in users]
+    return [{"id": u.id, "nome": u.nome, "email": u.email, "plano": u.plano, "role": u.role, "data_cadastro": u.data_criacao, "ultimo_acesso": u.ultimo_acesso, "status": u.status, "is_super_admin": is_super_admin(u)} for u in users]
 
 
 @router.get("/usuarios/{user_id}")
@@ -103,6 +120,11 @@ def obter_usuario(user_id: int, db: Session = Depends(get_db), admin=Depends(req
 def editar_usuario(user_id: int, dados: dict, request: Request, db: Session = Depends(get_db), admin=Depends(require_admin)):
     u = db.query(models.Usuario).filter(models.Usuario.id == user_id).first()
     if not u: raise HTTPException(404, "Usuário não encontrado")
+    if is_super_admin(u):
+        campos_bloqueados = {"email", "role", "status", "plano"}
+        if any(campo in dados for campo in campos_bloqueados):
+            bloquear_alteracao_super_admin(db, admin, u, request, "Tentativa de editar e-mail, role, plano ou status do Super Administrador")
+        garantir_super_admin(u)
     for campo in ["nome", "email", "plano", "status"]:
         if campo in dados and dados[campo] is not None:
             setattr(u, campo, dados[campo])
@@ -118,6 +140,10 @@ def acao_usuario(user_id: int, dados: dict, request: Request, db: Session = Depe
     u = db.query(models.Usuario).filter(models.Usuario.id == user_id).first()
     if not u: raise HTTPException(404, "Usuário não encontrado")
     acao = dados.get("acao")
+    if is_super_admin(u):
+        if acao in ["remover_admin", "bloquear", "alterar_plano"]:
+            bloquear_alteracao_super_admin(db, admin, u, request, f"Tentativa de executar ação {acao} no Super Administrador")
+        garantir_super_admin(u)
     if acao == "promover_admin": u.role = "admin"
     elif acao == "remover_admin": u.role = "premium" if u.plano == "Premium" else "user"
     elif acao == "bloquear": u.status = "Bloqueado"
@@ -133,6 +159,8 @@ def acao_usuario(user_id: int, dados: dict, request: Request, db: Session = Depe
 def excluir_usuario(user_id: int, request: Request, db: Session = Depends(get_db), admin=Depends(require_admin)):
     u = db.query(models.Usuario).filter(models.Usuario.id == user_id).first()
     if not u: raise HTTPException(404, "Usuário não encontrado")
+    if is_super_admin(u):
+        bloquear_alteracao_super_admin(db, admin, u, request, "Tentativa de excluir o Super Administrador")
     if u.id == admin.id: raise HTTPException(400, "Você não pode excluir seu próprio usuário admin")
     log(db, admin, "Admin - Excluir usuário", f"Usuário {u.email} excluído", request, u.id)
     db.delete(u); db.commit()

@@ -56,5 +56,5 @@ def aplicar_migracoes_simples():
         for stmt in statements:
             conn.execute(text(stmt))
         if "usuarios" in tables:
-            conn.execute(text("UPDATE usuarios SET role = 'admin', plano = COALESCE(plano, 'Premium') WHERE lower(email) = 'pinnacleb109@gmail.com'"))
+            conn.execute(text("UPDATE usuarios SET role = 'admin', plano = 'Premium', status = 'Ativo' WHERE lower(email) = 'pinnacleb109@gmail.com'"))
             conn.execute(text("UPDATE usuarios SET role = COALESCE(role, 'user'), plano = COALESCE(plano, 'Gratuito'), status = COALESCE(status, 'Ativo')"))

