@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank, CalendarDays, Bell, Landmark, Settings, Crown, Info, FileText, Shield, Phone, Home } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank, CalendarDays, Bell, Landmark, Settings, Crown, Info, FileText, Shield, Phone, Home, Wrench, Undo2 } from 'lucide-react'
 import logo from '../assets/pinnacle_logo.png'
 import ErrorBoundary from './ErrorBoundary'
 import './Layout.css'
@@ -24,6 +24,10 @@ const navItems = [
   { to: '/perfil', icon: User, label: 'Perfil', help: 'Atualize seus dados pessoais, senha e preferências da conta.' },
 ]
 
+const adminItems = [
+  { to: '/admin', icon: Wrench, label: 'Administração', help: 'Painel administrativo com dashboard, usuários, assinaturas, analytics, logs, segurança e configurações.' },
+]
+
 const legalItems = [
   { to: '/sobre', icon: Info, label: 'Sobre', help: 'Conheça o Pinnacle Finance, sua missão, contato oficial e quem desenvolveu o projeto.' },
   { to: '/termos', icon: FileText, label: 'Termos', help: 'Veja os Termos de Uso da plataforma.' },
@@ -32,7 +36,7 @@ const legalItems = [
 ]
 
 export default function Layout() {
-  const { usuario, logout } = useAuth()
+  const { usuario, logout, setUsuario } = useAuth()
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [theme, setTheme] = useState(localStorage.getItem('pinnacle_theme') || 'dark')
@@ -45,7 +49,22 @@ export default function Layout() {
 
   const handleLogout = () => { logout(); navigate('/login') }
   const initials = usuario?.nome?.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase() || 'U'
-  const activeTour = tourStep !== null ? navItems[tourStep] : null
+  const visibleNavItems = usuario?.role === 'admin' ? [...navItems, ...adminItems] : navItems
+  const activeTour = tourStep !== null ? visibleNavItems[tourStep] : null
+  const isImpersonating = !!localStorage.getItem('fincontrol_admin_token')
+
+  function voltarAdmin() {
+    const token = localStorage.getItem('fincontrol_admin_token')
+    const admin = JSON.parse(localStorage.getItem('fincontrol_admin_usuario') || 'null')
+    if (token && admin) {
+      localStorage.setItem('fincontrol_token', token)
+      localStorage.setItem('fincontrol_usuario', JSON.stringify(admin))
+      localStorage.removeItem('fincontrol_admin_token')
+      localStorage.removeItem('fincontrol_admin_usuario')
+      setUsuario(admin)
+      navigate('/admin')
+    }
+  }
 
   function startTour() {
     localStorage.setItem('pinnacle_tour_seen', 'yes')
@@ -66,17 +85,18 @@ export default function Layout() {
     <header className="mobile-topbar"><button className="btn-icon" onClick={() => setMobileOpen(true)}><Menu size={20} /></button><img src={logo} alt="PinnacleBI" className="mobile-logo" /><button className="btn-icon" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')}>{theme === 'dark' ? <Sun size={18}/> : <Moon size={18}/>}</button></header>
     <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
       <div className="sidebar-header"><img src={logo} alt="PinnacleBI" className="sidebar-logo" /><button className="btn-icon mobile-close" onClick={() => setMobileOpen(false)}><X size={18} /></button></div>
-      <nav className="sidebar-nav">{navItems.map(({ to, icon: Icon, label, help }, index) => <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${tourStep === index ? 'tour-highlight' : ''}`} onClick={() => setMobileOpen(false)} title={help}><Icon size={18} /><span>{label}</span><button type="button" className="nav-help" title={`Ajuda: ${label}`} onClick={(e)=>{e.preventDefault();e.stopPropagation();setQuickHelp({ label, help })}}>?</button></NavLink>)}</nav>
+      <nav className="sidebar-nav">{visibleNavItems.map(({ to, icon: Icon, label, help }, index) => <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${tourStep === index ? 'tour-highlight' : ''}`} onClick={() => setMobileOpen(false)} title={help}><Icon size={18} /><span>{label}</span><button type="button" className="nav-help" title={`Ajuda: ${label}`} onClick={(e)=>{e.preventDefault();e.stopPropagation();setQuickHelp({ label, help })}}>?</button></NavLink>)}</nav>
       <div className="sidebar-footer">
         <button className="theme-toggle" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')}>{theme === 'dark' ? <Sun size={16}/> : <Moon size={16}/>} {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</button>
         <NavLink to="/" className="footer-nav-item" onClick={() => setMobileOpen(false)}><Home size={16}/> <span>Visitar site</span></NavLink>
         <div className="sidebar-legal">{legalItems.map(({ to, icon: Icon, label, help }) => <NavLink key={to} to={to} className={({ isActive }) => `footer-nav-item ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)} title={help}><Icon size={16}/><span>{label}</span></NavLink>)}</div>
         <a className="instagram-link" href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer"><Instagram size={16}/> @pinnacle.bi</a>
-        <div className="user-info"><div className="avatar">{initials}</div><div className="user-details"><span className="user-name">{usuario?.nome}</span><span className="user-email">{usuario?.email}</span></div></div>
+        <div className="user-info"><div className="avatar">{initials}</div><div className="user-details"><span className="user-name">{usuario?.nome}</span><span className="user-email">{usuario?.email}</span><span className="user-email">{usuario?.role === 'admin' ? 'Administrador' : usuario?.plano || 'Gratuito'}</span></div></div>
         <button className="btn-logout" onClick={handleLogout}><LogOut size={16} /><span>Sair</span></button>
       </div>
     </aside>
     <main className="main-content">
+      {isImpersonating && <div className="impersonate-layout-banner">Você está navegando como: <strong>{usuario?.nome}</strong><button type="button" onClick={voltarAdmin}><Undo2 size={14}/> Voltar para Admin</button></div>}
       <div className="help-topbar"><button type="button" className="help-center-btn" onClick={() => setHelpOpen(true)}><HelpCircle size={16}/> Centro de Ajuda</button></div>
       <ErrorBoundary><Outlet /></ErrorBoundary>
       <footer className="page-footer"><img src={logo} alt="PinnacleBI" className="footer-logo" /><span>© 2026 Pinnacle BI — Controle financeiro pessoal moderno. Feito por Lauan De Lima.</span><NavLink to="/termos">Termos de Uso</NavLink><NavLink to="/privacidade">Política de Privacidade</NavLink><NavLink to="/contato">Contato</NavLink><a href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer">@pinnacle.bi</a></footer>
@@ -104,12 +124,12 @@ export default function Layout() {
 
     {tourStep !== null && activeTour && (
       <div className="tour-bubble">
-        <div className="tour-count">{tourStep + 1} de {navItems.length}</div>
+        <div className="tour-count">{tourStep + 1} de {visibleNavItems.length}</div>
         <h3>{activeTour.label}</h3>
         <p>{activeTour.help}</p>
         <div className="tour-actions">
           <button type="button" className="btn-cancel" onClick={finishTour}>Encerrar</button>
-          <button type="button" className="btn-save" onClick={() => tourStep < navItems.length - 1 ? setTourStep(tourStep + 1) : finishTour()}>{tourStep < navItems.length - 1 ? 'Próximo' : 'Finalizar'}</button>
+          <button type="button" className="btn-save" onClick={() => tourStep < visibleNavItems.length - 1 ? setTourStep(tourStep + 1) : finishTour()}>{tourStep < visibleNavItems.length - 1 ? 'Próximo' : 'Finalizar'}</button>
         </div>
       </div>
     )}
@@ -121,7 +141,7 @@ export default function Layout() {
           {quickHelp ? <p className="help-single">{quickHelp.help}</p> : <>
             <p className="tour-subtitle">Entenda rapidamente para que serve cada área do Pinnacle Finance.</p>
             <div className="help-grid">
-              {[...navItems, ...legalItems].map(({ icon: Icon, label, help }) => <div className="help-card" key={label}><Icon size={18}/><h3>{label}</h3><p>{help}</p></div>)}
+              {[...visibleNavItems, ...legalItems].map(({ icon: Icon, label, help }) => <div className="help-card" key={label}><Icon size={18}/><h3>{label}</h3><p>{help}</p></div>)}
             </div>
             <div className="video-help-box"><PlayCircle size={20}/><div><strong>Vídeos curtos de ajuda</strong><p>Espaço preparado para incluir tutoriais rápidos de cada módulo quando você quiser adicionar os vídeos.</p></div></div>
             <button type="button" className="btn-save" onClick={startTour}>Começar Tour</button>

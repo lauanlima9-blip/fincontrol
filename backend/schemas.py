@@ -44,6 +44,10 @@ class UsuarioResponse(BaseModel):
     tema_preferido: Optional[str] = "dark"
     notificacoes_ativas: Optional[bool] = True
     two_factor_enabled: Optional[bool] = False
+    role: str = "user"
+    plano: Optional[str] = "Gratuito"
+    status: Optional[str] = "Ativo"
+    ultimo_acesso: Optional[datetime] = None
     model_config = {"from_attributes": True}
 
 

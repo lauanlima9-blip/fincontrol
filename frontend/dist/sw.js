@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pinnacle-finance-v2'
+const CACHE_NAME = 'pinnacle-finance-v2-legal-calendar-fix'
 const APP_SHELL = ['/', '/manifest.json', '/pinnacle_logo.png']
 
 self.addEventListener('install', event => {
@@ -14,7 +14,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return
   const url = new URL(event.request.url)
-  if (url.pathname.startsWith('/api') || url.pathname.includes('/cartoes') || url.pathname.includes('/parcelamentos') || url.pathname.includes('/insights')) return
+  if (url.pathname.startsWith('/api') || url.pathname.includes('/usuarios') || url.pathname.includes('/dashboard') || url.pathname.includes('/movimentacoes') || url.pathname.includes('/metas') || url.pathname.includes('/categorias') || url.pathname.includes('/cartoes') || url.pathname.includes('/parcelamentos') || url.pathname.includes('/insights') || url.pathname.includes('/planejamento') || url.pathname.includes('/importacao')) return
   event.respondWith(
     caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
       const clone = response.clone()

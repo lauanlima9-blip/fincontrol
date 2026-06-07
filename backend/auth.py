@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 import bcrypt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from database import get_db
@@ -34,6 +34,7 @@ def criar_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def get_usuario_atual(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> models.Usuario:
@@ -54,4 +55,17 @@ def get_usuario_atual(
     usuario = db.query(models.Usuario).filter(models.Usuario.id == int(usuario_id)).first()
     if usuario is None:
         raise credentials_exception
+    ip = request.client.host if request.client else None
+    if ip:
+        bloqueado = db.query(models.BlockedIP).filter(models.BlockedIP.ip == ip, models.BlockedIP.ativo == True).first()
+        if bloqueado:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="IP bloqueado")
+    if getattr(usuario, "status", "Ativo") == "Bloqueado":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Usuário bloqueado")
     return usuario
+
+
+def require_admin(usuario_atual: models.Usuario = Depends(get_usuario_atual)) -> models.Usuario:
+    if getattr(usuario_atual, "role", "user") != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="403 - Acesso Negado")
+    return usuario_atual

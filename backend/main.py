@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 import models
 from migrations_runtime import aplicar_migracoes_simples
-from routes import usuarios, movimentacoes, dashboard, metas, categorias, cartoes, parcelamentos, insights, importacao, planejamento, notificacoes, v2
+from routes import usuarios, movimentacoes, dashboard, metas, categorias, cartoes, parcelamentos, insights, importacao, planejamento, notificacoes, v2, admin
 
 Base.metadata.create_all(bind=engine)
 aplicar_migracoes_simples()
@@ -30,6 +30,7 @@ app.include_router(importacao.router)
 app.include_router(planejamento.router)
 app.include_router(notificacoes.router)
 app.include_router(v2.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def root():

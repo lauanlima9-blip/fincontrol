@@ -23,11 +23,19 @@ import SobrePage from './pages/SobrePage'
 import TermosPage from './pages/TermosPage'
 import PrivacidadePage from './pages/PrivacidadePage'
 import ContatoPage from './pages/ContatoPage'
+import AdminPage from './pages/AdminPage'
 
 function PrivateRoute({ children }) {
   const { usuario, loading } = useAuth()
   if (loading) return <div className="loading-screen"><div className="spinner" /></div>
   return usuario ? children : <Navigate to="/login" replace />
+}
+
+function AdminRoute({ children }) {
+  const { usuario, loading } = useAuth()
+  if (loading) return <div className="loading-screen"><div className="spinner" /></div>
+  if (!usuario) return <Navigate to="/login" replace />
+  return usuario.role === 'admin' ? children : <div className="admin-denied"><h1>403 - Acesso Negado</h1><p>Somente administradores podem acessar esta área.</p></div>
 }
 
 function PublicRoute({ children }) {
@@ -68,6 +76,7 @@ export default function App() {
             <Route path="privacidade" element={<PrivacidadePage />} />
             <Route path="contato" element={<ContatoPage />} />
             <Route path="perfil" element={<PerfilPage />} />
+            <Route path="admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

@@ -16,6 +16,12 @@ class FrequenciaRecorrencia(str, enum.Enum):
     anual = "Anual"
 
 
+class UserRole(str, enum.Enum):
+    admin = "admin"
+    premium = "premium"
+    user = "user"
+
+
 class Usuario(Base):
     __tablename__ = "usuarios"
 
@@ -32,6 +38,13 @@ class Usuario(Base):
     codigo_2fa_expira_em = Column(DateTime(timezone=True), nullable=True)
     reset_token = Column(String(120), nullable=True, index=True)
     reset_token_expira_em = Column(DateTime(timezone=True), nullable=True)
+    role = Column(String(20), default="user", nullable=False)
+    plano = Column(String(30), default="Gratuito", nullable=False)
+    status = Column(String(30), default="Ativo", nullable=False)
+    ultimo_acesso = Column(DateTime(timezone=True), nullable=True)
+    ultimo_ip = Column(String(80), nullable=True)
+    ultimo_dispositivo = Column(String(255), nullable=True)
+    ultimo_navegador = Column(String(255), nullable=True)
 
 
     movimentacoes = relationship("Movimentacao", back_populates="usuario", cascade="all, delete-orphan")
@@ -223,3 +236,58 @@ class PatrimonioItem(Base):
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="patrimonios")
+
+
+class SystemLog(Base):
+    __tablename__ = "system_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)
+    acao = Column(String(80), nullable=False, index=True)
+    descricao = Column(Text, nullable=True)
+    ip = Column(String(80), nullable=True)
+    dispositivo = Column(String(255), nullable=True)
+    navegador = Column(String(255), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class LoginHistory(Base):
+    __tablename__ = "login_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    ip = Column(String(80), nullable=True)
+    dispositivo = Column(String(255), nullable=True)
+    navegador = Column(String(255), nullable=True)
+    ativo = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class SubscriptionPlan(Base):
+    __tablename__ = "subscription_plans"
+
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(80), nullable=False, unique=True)
+    valor = Column(Float, default=0, nullable=False)
+    beneficios = Column(Text, nullable=True)
+    status = Column(String(30), default="Ativo", nullable=False)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class SystemSetting(Base):
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    chave = Column(String(120), nullable=False, unique=True)
+    valor = Column(Text, nullable=True)
+    data_atualizacao = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class BlockedIP(Base):
+    __tablename__ = "blocked_ips"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ip = Column(String(80), nullable=False, unique=True)
+    motivo = Column(String(255), nullable=True)
+    ativo = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

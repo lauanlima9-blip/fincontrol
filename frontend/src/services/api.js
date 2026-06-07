@@ -19,3 +19,25 @@ export const planejamentoService = { metas: () => api.get('/planejamento/metas')
 
 export const notificacoesService = { listar: () => api.get('/notificacoes/'), lida: (id) => api.post(`/notificacoes/${id}/lida`), excluir: (id) => api.delete(`/notificacoes/${id}`), resumo: () => api.get('/v2/notificacoes/resumo') }
 export const v2Service = { calendario: (params) => api.get('/v2/calendario', { params }), score: () => api.get('/v2/score'), patrimonio: () => api.get('/v2/patrimonio'), criarPatrimonio: (dados) => api.post('/v2/patrimonio', dados), atualizarPatrimonio: (id,dados) => api.put(`/v2/patrimonio/${id}`, dados), excluirPatrimonio: (id) => api.delete(`/v2/patrimonio/${id}`), backup: () => api.get('/v2/backup'), backupCsv: () => api.get('/v2/backup/excel', { responseType: 'text' }), importarBackup: (dados) => api.post('/v2/backup/importar', dados) }
+
+export const adminService = {
+  dashboard: () => api.get('/admin/dashboard'),
+  usuarios: () => api.get('/admin/usuarios'),
+  usuario: (id) => api.get(`/admin/usuarios/${id}`),
+  editarUsuario: (id,dados) => api.put(`/admin/usuarios/${id}`, dados),
+  acaoUsuario: (id,dados) => api.post(`/admin/usuarios/${id}/acao`, dados),
+  excluirUsuario: (id) => api.delete(`/admin/usuarios/${id}`),
+  impersonar: (id) => api.post(`/admin/usuarios/${id}/impersonar`),
+  planos: () => api.get('/admin/planos'),
+  criarPlano: (dados) => api.post('/admin/planos', dados),
+  editarPlano: (id,dados) => api.put(`/admin/planos/${id}`, dados),
+  analytics: () => api.get('/admin/analytics'),
+  logs: (params) => api.get('/admin/logs', { params }),
+  configuracoes: () => api.get('/admin/configuracoes'),
+  salvarConfiguracoes: (dados) => api.put('/admin/configuracoes', dados),
+  seguranca: () => api.get('/admin/seguranca'),
+  encerrarSessao: (id) => api.post(`/admin/seguranca/encerrar-sessao/${id}`),
+  bloquearIp: (dados) => api.post('/admin/seguranca/bloquear-ip', dados),
+  backup: (tipo) => api.get(`/admin/backup/${tipo}`, { responseType: 'blob' }),
+  restaurarBackup: (dados) => api.post('/admin/backup/restaurar', dados),
+}

@@ -365,3 +365,4 @@
 }
 .sidebar-footer .instagram-link{margin-bottom:0;}
 @media (max-height:720px){.sidebar-legal{gap:.2rem;padding:.45rem 0}.footer-nav-item{padding:.45rem .65rem;font-size:.78rem}}
+.impersonate-layout-banner{margin-bottom:1rem;background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.35);color:#ffd166;border-radius:16px;padding:.85rem 1rem;display:flex;align-items:center;gap:.6rem}.impersonate-layout-banner button{margin-left:auto;border:0;background:#ffd166;color:#171717;border-radius:10px;padding:.45rem .7rem;display:flex;align-items:center;gap:.35rem;cursor:pointer}@media(max-width:760px){.impersonate-layout-banner{flex-direction:column;align-items:stretch}.impersonate-layout-banner button{margin-left:0;justify-content:center}}

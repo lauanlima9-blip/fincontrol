@@ -44,6 +44,17 @@ def aplicar_migracoes_simples():
         add_col("usuarios", user_cols, "reset_token", "VARCHAR(120)")
         add_col("usuarios", user_cols, "reset_token_expira_em", f"{dt}")
 
+        add_col("usuarios", user_cols, "role", "VARCHAR(20) DEFAULT 'user' NOT NULL")
+        add_col("usuarios", user_cols, "plano", "VARCHAR(30) DEFAULT 'Gratuito' NOT NULL")
+        add_col("usuarios", user_cols, "status", "VARCHAR(30) DEFAULT 'Ativo' NOT NULL")
+        add_col("usuarios", user_cols, "ultimo_acesso", f"{dt}")
+        add_col("usuarios", user_cols, "ultimo_ip", "VARCHAR(80)")
+        add_col("usuarios", user_cols, "ultimo_dispositivo", "VARCHAR(255)")
+        add_col("usuarios", user_cols, "ultimo_navegador", "VARCHAR(255)")
+
     with engine.begin() as conn:
         for stmt in statements:
             conn.execute(text(stmt))
+        if "usuarios" in tables:
+            conn.execute(text("UPDATE usuarios SET role = 'admin', plano = COALESCE(plano, 'Premium') WHERE lower(email) = 'pinnacleb109@gmail.com'"))
+            conn.execute(text("UPDATE usuarios SET role = COALESCE(role, 'user'), plano = COALESCE(plano, 'Gratuito'), status = COALESCE(status, 'Ativo')"))
