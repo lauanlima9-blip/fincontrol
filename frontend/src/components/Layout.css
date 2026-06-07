@@ -335,3 +335,33 @@
 
 .page-footer a,.page-footer .active{color:var(--accent-green);font-weight:700;text-decoration:none}
 .page-footer a:hover{text-decoration:underline}
+
+
+/* Links institucionais posicionados na parte inferior do menu, próximos ao Sair */
+.sidebar-legal{
+  display:flex;
+  flex-direction:column;
+  gap:.35rem;
+  padding:.65rem 0;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.footer-nav-item{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  width:100%;
+  padding:.58rem .75rem;
+  border-radius:var(--radius-sm);
+  color:var(--text-secondary);
+  font-size:.82rem;
+  font-weight:600;
+  text-decoration:none;
+  transition:.2s;
+}
+.footer-nav-item:hover,.footer-nav-item.active{
+  background:var(--bg-elevated);
+  color:var(--accent-green);
+}
+.sidebar-footer .instagram-link{margin-bottom:0;}
+@media (max-height:720px){.sidebar-legal{gap:.2rem;padding:.45rem 0}.footer-nav-item{padding:.45rem .65rem;font-size:.78rem}}

@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank, CalendarDays, Bell, Landmark, Settings, Crown, Info, FileText, Shield, Phone } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, BarChart3, LogOut, Menu, X, Tags, User, Sun, Moon, Instagram, CreditCard, Brain, Upload, SplitSquareHorizontal, HelpCircle, PlayCircle, PiggyBank, CalendarDays, Bell, Landmark, Settings, Crown, Info, FileText, Shield, Phone, Home } from 'lucide-react'
 import logo from '../assets/pinnacle_logo.png'
 import ErrorBoundary from './ErrorBoundary'
 import './Layout.css'
@@ -21,11 +21,14 @@ const navItems = [
   { to: '/relatorios', icon: BarChart3, label: 'Relatórios', help: 'Acompanhe análises detalhadas, gráficos, indicadores e exportações para PDF.' },
   { to: '/planos', icon: Crown, label: 'Planos', help: 'Veja o plano gratuito e a estrutura premium preparada para monetização.' },
   { to: '/configuracoes', icon: Settings, label: 'Configurações', help: 'Altere dados da conta, tema, notificações, backup e exclusão de conta.' },
+  { to: '/perfil', icon: User, label: 'Perfil', help: 'Atualize seus dados pessoais, senha e preferências da conta.' },
+]
+
+const legalItems = [
   { to: '/sobre', icon: Info, label: 'Sobre', help: 'Conheça o Pinnacle Finance, sua missão, contato oficial e quem desenvolveu o projeto.' },
   { to: '/termos', icon: FileText, label: 'Termos', help: 'Veja os Termos de Uso da plataforma.' },
   { to: '/privacidade', icon: Shield, label: 'Privacidade', help: 'Entenda como seus dados são tratados e protegidos.' },
   { to: '/contato', icon: Phone, label: 'Contato', help: 'Fale com o suporte pelo e-mail oficial e Instagram.' },
-  { to: '/perfil', icon: User, label: 'Perfil', help: 'Atualize seus dados pessoais, senha e preferências da conta.' },
 ]
 
 export default function Layout() {
@@ -66,7 +69,9 @@ export default function Layout() {
       <nav className="sidebar-nav">{navItems.map(({ to, icon: Icon, label, help }, index) => <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${tourStep === index ? 'tour-highlight' : ''}`} onClick={() => setMobileOpen(false)} title={help}><Icon size={18} /><span>{label}</span><button type="button" className="nav-help" title={`Ajuda: ${label}`} onClick={(e)=>{e.preventDefault();e.stopPropagation();setQuickHelp({ label, help })}}>?</button></NavLink>)}</nav>
       <div className="sidebar-footer">
         <button className="theme-toggle" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')}>{theme === 'dark' ? <Sun size={16}/> : <Moon size={16}/>} {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</button>
-        <a className="instagram-link" href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer"><Instagram size={16}/> Siga a Pinnacle BI no Instagram</a>
+        <NavLink to="/" className="footer-nav-item" onClick={() => setMobileOpen(false)}><Home size={16}/> <span>Visitar site</span></NavLink>
+        <div className="sidebar-legal">{legalItems.map(({ to, icon: Icon, label, help }) => <NavLink key={to} to={to} className={({ isActive }) => `footer-nav-item ${isActive ? 'active' : ''}`} onClick={() => setMobileOpen(false)} title={help}><Icon size={16}/><span>{label}</span></NavLink>)}</div>
+        <a className="instagram-link" href="https://www.instagram.com/pinnacle.bi/" target="_blank" rel="noreferrer"><Instagram size={16}/> @pinnacle.bi</a>
         <div className="user-info"><div className="avatar">{initials}</div><div className="user-details"><span className="user-name">{usuario?.nome}</span><span className="user-email">{usuario?.email}</span></div></div>
         <button className="btn-logout" onClick={handleLogout}><LogOut size={16} /><span>Sair</span></button>
       </div>
@@ -116,7 +121,7 @@ export default function Layout() {
           {quickHelp ? <p className="help-single">{quickHelp.help}</p> : <>
             <p className="tour-subtitle">Entenda rapidamente para que serve cada área do Pinnacle Finance.</p>
             <div className="help-grid">
-              {navItems.map(({ icon: Icon, label, help }) => <div className="help-card" key={label}><Icon size={18}/><h3>{label}</h3><p>{help}</p></div>)}
+              {[...navItems, ...legalItems].map(({ icon: Icon, label, help }) => <div className="help-card" key={label}><Icon size={18}/><h3>{label}</h3><p>{help}</p></div>)}
             </div>
             <div className="video-help-box"><PlayCircle size={20}/><div><strong>Vídeos curtos de ajuda</strong><p>Espaço preparado para incluir tutoriais rápidos de cada módulo quando você quiser adicionar os vídeos.</p></div></div>
             <button type="button" className="btn-save" onClick={startTour}>Começar Tour</button>
