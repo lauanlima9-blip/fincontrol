@@ -20,6 +20,7 @@ class Usuario(Base):
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
 
     movimentacoes = relationship("Movimentacao", back_populates="usuario", cascade="all, delete-orphan")
+    metas = relationship("Meta", back_populates="usuario", cascade="all, delete-orphan")
 
 
 class Movimentacao(Base):
@@ -35,3 +36,17 @@ class Movimentacao(Base):
     data_criacao = Column(DateTime(timezone=True), server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="movimentacoes")
+
+
+class Meta(Base):
+    __tablename__ = "metas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    descricao = Column(String(255), nullable=False)
+    valor_meta = Column(Float, nullable=False)
+    mes = Column(Integer, nullable=False)
+    ano = Column(Integer, nullable=False)
+    data_criacao = Column(DateTime(timezone=True), server_default=func.now())
+
+    usuario = relationship("Usuario", back_populates="metas")

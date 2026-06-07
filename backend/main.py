@@ -2,15 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 import models
-from routes import usuarios, movimentacoes, dashboard
+from routes import usuarios, movimentacoes, dashboard, metas
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(
-    title="FinControl API",
-    description="API de Controle Financeiro Pessoal",
-    version="1.0.0",
-)
+app = FastAPI(title="FinControl API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,6 +19,7 @@ app.add_middleware(
 app.include_router(usuarios.router)
 app.include_router(movimentacoes.router)
 app.include_router(dashboard.router)
+app.include_router(metas.router)
 
 @app.get("/")
 def root():

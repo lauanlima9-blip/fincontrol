@@ -45,3 +45,10 @@ export const dashboardService = {
   categorias: () => api.get('/dashboard/categorias'),
   relatorio: (params) => api.get('/dashboard/relatorio', { params }),
 }
+
+export const metasService = {
+  listar: (params) => api.get('/metas/', { params }),
+  criar: (dados) => api.post('/metas/', dados),
+  atualizar: (id, dados) => api.put(`/metas/${id}`, dados),
+  excluir: (id) => api.delete(`/metas/${id}`),
+}
