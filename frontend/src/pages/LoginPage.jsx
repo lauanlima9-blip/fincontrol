@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { TrendingUp, Eye, EyeOff, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle } from 'lucide-react'
+import logo from '../assets/pinnacle_logo.png'
 import './AuthPages.css'
 
 export default function LoginPage() {
@@ -35,8 +36,7 @@ export default function LoginPage() {
 
       <div className="auth-container fade-in">
         <div className="auth-brand">
-          <TrendingUp size={28} />
-          <h1>Fin<span>Control</span></h1>
+          <img src={logo} alt="PinnacleBI" className="auth-logo" />
         </div>
         <p className="auth-subtitle">Controle financeiro inteligente</p>
 

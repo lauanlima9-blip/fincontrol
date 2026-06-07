@@ -3,8 +3,9 @@ import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import {
   LayoutDashboard, ArrowLeftRight, BarChart3,
-  LogOut, Menu, X, TrendingUp, User
+  LogOut, Menu, X
 } from 'lucide-react'
+import logo from '../assets/pinnacle_logo.png'
 import './Layout.css'
 
 const navItems = [
@@ -27,7 +28,6 @@ export default function Layout() {
 
   return (
     <div className="app-layout">
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />
       )}
@@ -37,17 +37,14 @@ export default function Layout() {
         <button className="btn-icon" onClick={() => setMobileOpen(true)}>
           <Menu size={20} />
         </button>
-        <span className="logo-text">Fin<span>Control</span></span>
+        <img src={logo} alt="PinnacleBI" className="mobile-logo" />
         <div className="avatar-sm">{initials}</div>
       </header>
 
       {/* Sidebar */}
       <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <div className="logo">
-            <TrendingUp size={20} />
-            <span>Fin<strong>Control</strong></span>
-          </div>
+          <img src={logo} alt="PinnacleBI" className="sidebar-logo" />
           <button className="btn-icon mobile-close" onClick={() => setMobileOpen(false)}>
             <X size={18} />
           </button>
@@ -85,7 +82,8 @@ export default function Layout() {
       <main className="main-content">
         <Outlet />
         <footer className="page-footer">
-          © 2026 PinnacleBI — Criado por Lauan De Lima. Todos os direitos reservados.
+          <img src={logo} alt="PinnacleBI" className="footer-logo" />
+          <span>© 2026 PinnacleBI — Criado por Lauan De Lima. Todos os direitos reservados.</span>
         </footer>
       </main>
     </div>
