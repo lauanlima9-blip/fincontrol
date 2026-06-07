@@ -1,0 +1,1 @@
+export default function ContatoPage(){return (<div className='page-container'><h1>Contato</h1><p>Email: pinnacleb109@gmail.com</p><p>Instagram: @pinnacle.bi</p></div>)}

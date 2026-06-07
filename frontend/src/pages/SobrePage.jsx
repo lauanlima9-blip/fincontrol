@@ -1,0 +1,1 @@
+export default function SobrePage(){return (<div className='page-container'><h1>Sobre o Pinnacle Finance</h1><p>O Pinnacle Finance nasceu para ajudar pessoas a organizarem suas finanças com inteligência.</p><p>Contato: pinnacleb109@gmail.com</p><p>Instagram: @pinnacle.bi</p><p>Desenvolvido por Lauan De Lima.</p></div>)}

@@ -1,0 +1,1 @@
+export default function PrivacidadePage(){return (<div className='page-container'><h1>Política de Privacidade</h1><p>O Pinnacle Finance não vende dados pessoais dos usuários.</p><p>Contato: pinnacleb109@gmail.com</p></div>)}

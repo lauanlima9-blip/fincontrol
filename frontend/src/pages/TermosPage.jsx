@@ -1,0 +1,1 @@
+export default function TermosPage(){return (<div className='page-container'><h1>Termos de Uso</h1><p>Ao utilizar o Pinnacle Finance você concorda com estes termos.</p><p>Contato: pinnacleb109@gmail.com</p></div>)}
