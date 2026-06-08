@@ -40,4 +40,6 @@ export const adminService = {
   bloquearIp: (dados) => api.post('/admin/seguranca/bloquear-ip', dados),
   backup: (tipo) => api.get(`/admin/backup/${tipo}`, { responseType: 'blob' }),
   restaurarBackup: (dados) => api.post('/admin/backup/restaurar', dados),
+  emailStatus: () => api.get('/admin/email/status'),
+  emailTeste: (dados) => api.post('/admin/email/teste', dados),
 }

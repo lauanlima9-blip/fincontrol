@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from database import get_db
 import models
 from auth import require_admin, criar_token, hash_senha
+from email_utils import status_email, enviar_email
 
 router = APIRouter(prefix="/admin", tags=["Administração"])
 
@@ -273,6 +274,27 @@ def bloquear_ip(dados: dict, request: Request, db: Session = Depends(get_db), ad
     else: db.add(models.BlockedIP(ip=ip, motivo=dados.get("motivo", "Bloqueado pelo admin")))
     log(db, admin, "Bloquear IP", f"IP {ip} bloqueado", request); db.commit()
     return {"mensagem": "IP bloqueado"}
+
+
+@router.get("/email/status")
+def email_status(admin=Depends(require_admin)):
+    return status_email()
+
+
+@router.post("/email/teste")
+def email_teste(dados: dict, request: Request, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    destino = dados.get("email") or admin.email
+    enviado = enviar_email(
+        destino,
+        "Teste de e-mail - Pinnacle Finance",
+        "<div style='font-family:Arial'><h2>Teste de e-mail</h2><p>O envio de e-mail do Pinnacle Finance está funcionando.</p></div>",
+        "O envio de e-mail do Pinnacle Finance está funcionando."
+    )
+    log(db, admin, "Teste SMTP", "Teste de e-mail enviado" if enviado else "Falha no teste de e-mail SMTP", request)
+    db.commit()
+    if not enviado:
+        raise HTTPException(status_code=500, detail="Falha ao enviar e-mail. Verifique SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM e APP_URL no ambiente do deploy.")
+    return {"mensagem": "E-mail de teste enviado", "email": destino}
 
 
 @router.get("/backup/{tipo}")

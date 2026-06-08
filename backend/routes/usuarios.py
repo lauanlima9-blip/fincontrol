@@ -100,7 +100,7 @@ def login(dados: schemas.LoginRequest, request: Request, db: Session = Depends(g
 
 
 @router.post("/esqueci-senha")
-def esqueci_senha(dados: schemas.EsqueciSenhaRequest, db: Session = Depends(get_db)):
+def esqueci_senha(dados: schemas.EsqueciSenhaRequest, request: Request, db: Session = Depends(get_db)):
     usuario = db.query(models.Usuario).filter(models.Usuario.email == dados.email).first()
     # Resposta neutra para não revelar se o e-mail existe.
     mensagem = "Se este e-mail estiver cadastrado, enviaremos instruções de recuperação."
@@ -110,8 +110,16 @@ def esqueci_senha(dados: schemas.EsqueciSenhaRequest, db: Session = Depends(get_
     usuario.reset_token = _hash_token(token)
     usuario.reset_token_expira_em = _agora() + timedelta(minutes=30)
     db.commit()
-    enviar_recuperacao_senha(usuario.email, token)
-    return {"mensagem": mensagem}
+    enviado = enviar_recuperacao_senha(usuario.email, token)
+    db.add(models.SystemLog(
+        user_id=usuario.id,
+        acao="Recuperação de senha",
+        descricao="E-mail de recuperação enviado" if enviado else "Falha ao enviar e-mail de recuperação: SMTP não configurado ou erro no provedor",
+        ip=request.client.host if request.client else None,
+        navegador=request.headers.get("user-agent")
+    ))
+    db.commit()
+    return {"mensagem": mensagem, "email_enviado": enviado}
 
 
 @router.post("/redefinir-senha")
