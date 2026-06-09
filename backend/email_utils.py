@@ -1,5 +1,6 @@
 import os
 import smtplib
+import socket
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import parseaddr, formataddr
@@ -9,6 +10,45 @@ from dotenv import load_dotenv
 load_dotenv()
 
 LAST_EMAIL_ERROR: Optional[str] = None
+
+
+class SMTPIPv4(smtplib.SMTP):
+    """SMTP que força IPv4.
+
+    Em alguns deploys Docker/Render, smtp.gmail.com resolve IPv6 primeiro e a
+    conexão falha com OSError [Errno 101] Network is unreachable. Forçar AF_INET
+    evita esse problema sem mudar as variáveis SMTP.
+    """
+    def _get_socket(self, host, port, timeout):
+        if timeout is not None and not timeout:
+            raise ValueError('Non-blocking socket (timeout=0) is not supported')
+        for family, socktype, proto, canonname, sockaddr in socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM):
+            sock = socket.socket(family, socktype, proto)
+            try:
+                sock.settimeout(timeout)
+                sock.connect(sockaddr)
+                return sock
+            except OSError:
+                sock.close()
+                raise
+        raise OSError(f'Não foi possível resolver/conectar em IPv4: {host}:{port}')
+
+
+class SMTPSSLIPv4(smtplib.SMTP_SSL):
+    """SMTP SSL que força IPv4 pelo mesmo motivo do SMTPIPv4."""
+    def _get_socket(self, host, port, timeout):
+        if timeout is not None and not timeout:
+            raise ValueError('Non-blocking socket (timeout=0) is not supported')
+        for family, socktype, proto, canonname, sockaddr in socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM):
+            sock = socket.socket(family, socktype, proto)
+            try:
+                sock.settimeout(timeout)
+                sock.connect(sockaddr)
+                return self.context.wrap_socket(sock, server_hostname=host)
+            except OSError:
+                sock.close()
+                raise
+        raise OSError(f'Não foi possível resolver/conectar em IPv4: {host}:{port}')
 
 
 def _env(*names: str, default: str = '') -> str:
@@ -108,11 +148,11 @@ def enviar_email(destinatario: str, assunto: str, html: str, texto: Optional[str
 
     try:
         if cfg['smtp_use_ssl']:
-            with smtplib.SMTP_SSL(cfg['smtp_host'], cfg['smtp_port'], timeout=30) as server:
+            with SMTPSSLIPv4(cfg['smtp_host'], cfg['smtp_port'], timeout=30) as server:
                 server.login(cfg['smtp_user'], cfg['smtp_password'])
                 server.sendmail(_sender_email(cfg), [destinatario], msg.as_string())
         else:
-            with smtplib.SMTP(cfg['smtp_host'], cfg['smtp_port'], timeout=30) as server:
+            with SMTPIPv4(cfg['smtp_host'], cfg['smtp_port'], timeout=30) as server:
                 server.ehlo()
                 if cfg['smtp_use_tls']:
                     server.starttls()
@@ -129,7 +169,11 @@ def enviar_email(destinatario: str, assunto: str, html: str, texto: Optional[str
     except smtplib.SMTPException as exc:
         LAST_EMAIL_ERROR = f'Erro SMTP: {type(exc).__name__}: {exc}'
     except Exception as exc:
-        LAST_EMAIL_ERROR = f'Erro inesperado no envio: {type(exc).__name__}: {exc}'
+        
+        if isinstance(exc, OSError) and getattr(exc, 'errno', None) == 101:
+            LAST_EMAIL_ERROR = 'Não foi possível conectar ao SMTP pela rede do deploy. O código agora força IPv4; confirme SMTP_HOST=smtp.gmail.com, SMTP_PORT=587, SMTP_USE_TLS=true e faça novo deploy. Se persistir, use um provedor transacional como Brevo/Resend.'
+        else:
+            LAST_EMAIL_ERROR = f'Erro inesperado no envio: {type(exc).__name__}: {exc}'
     print('\n[PINNACLE ERRO AO ENVIAR EMAIL]')
     print(f'Host: {cfg["smtp_host"]}:{cfg["smtp_port"]}')
     print(f'Usuário SMTP: {cfg["smtp_user"]}')
