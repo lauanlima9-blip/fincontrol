@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 import csv, io, hashlib
 from database import get_db
-from auth import get_usuario_atual
+from auth import get_usuario_atual, require_premium
 import models
 try:
     from openpyxl import load_workbook
@@ -65,14 +65,14 @@ def normalize(rows, usuario_id, db):
     return out
 
 @router.post('/preview')
-def preview(file:UploadFile=File(...), db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def preview(file:UploadFile=File(...), db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     content=file.file.read(); name=file.filename.lower()
     rows=read_csv(content) if name.endswith('.csv') else read_xlsx(content) if name.endswith('.xlsx') else None
     if rows is None: raise HTTPException(400,'Envie um arquivo CSV ou XLSX')
     return {'arquivo':file.filename,'total_linhas':len(rows),'movimentacoes':normalize(rows, usuario_atual.id, db)}
 
 @router.post('/confirmar')
-def confirmar(itens:list[dict], db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def confirmar(itens:list[dict], db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     salvos=0; ignorados=0
     for item in itens:
         if item.get('duplicado') or db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id==usuario_atual.id, models.Movimentacao.hash_importacao==item.get('hash_importacao')).first():

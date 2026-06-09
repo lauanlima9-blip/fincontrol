@@ -75,3 +75,18 @@ def require_admin(usuario_atual: models.Usuario = Depends(get_usuario_atual)) ->
     if getattr(usuario_atual, "role", "user") != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="403 - Acesso Negado")
     return usuario_atual
+
+
+def usuario_tem_premium(usuario: models.Usuario) -> bool:
+    role = (getattr(usuario, "role", "user") or "user").lower()
+    plano = (getattr(usuario, "plano", "Gratuito") or "Gratuito").lower()
+    return role == "admin" or role == "premium" or plano == "premium"
+
+
+def require_premium(usuario_atual: models.Usuario = Depends(get_usuario_atual)) -> models.Usuario:
+    if not usuario_tem_premium(usuario_atual):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Recurso disponível apenas no Plano Premium"
+        )
+    return usuario_atual

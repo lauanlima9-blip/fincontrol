@@ -76,7 +76,7 @@ def _config() -> dict:
     smtp_from_name = _env('SMTP_FROM_NAME', 'EMAIL_FROM_NAME', default='Pinnacle Finance')
     smtp_use_ssl = _bool_env('SMTP_USE_SSL', 'EMAIL_USE_SSL', 'MAIL_SSL_TLS', default='false') or smtp_port == 465
     smtp_use_tls = _bool_env('SMTP_USE_TLS', 'EMAIL_USE_TLS', 'MAIL_STARTTLS', default='true') and not smtp_use_ssl
-    app_url = _env('APP_URL', 'FRONTEND_URL', 'SITE_URL', 'VITE_PUBLIC_URL', default='http://localhost:5173')
+    app_url = _env('FRONTEND_URL', 'APP_URL', 'SITE_URL', 'VITE_PUBLIC_URL', default='https://pinnaclefinance.com.br')
     debug_email = _bool_env('DEBUG_EMAIL', default='false')
     return {
         'smtp_user': smtp_user,

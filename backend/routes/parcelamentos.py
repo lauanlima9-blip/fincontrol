@@ -4,7 +4,7 @@ from sqlalchemy import extract
 from datetime import datetime
 from calendar import monthrange
 from database import get_db
-from auth import get_usuario_atual
+from auth import get_usuario_atual, require_premium
 import models, schemas
 
 router = APIRouter(prefix="/parcelamentos", tags=["Parcelamentos"])
@@ -24,12 +24,12 @@ def enrich(p):
     return data
 
 @router.get("/")
-def listar(db: Session=Depends(get_db), usuario_atual: models.Usuario=Depends(get_usuario_atual)):
+def listar(db: Session=Depends(get_db), usuario_atual: models.Usuario=Depends(require_premium)):
     ps=db.query(models.Parcelamento).filter(models.Parcelamento.usuario_id==usuario_atual.id).order_by(models.Parcelamento.data_criacao.desc()).all()
     return [enrich(p) for p in ps]
 
 @router.post("/", status_code=201)
-def criar(dados: schemas.ParcelamentoCreate, db: Session=Depends(get_db), usuario_atual: models.Usuario=Depends(get_usuario_atual)):
+def criar(dados: schemas.ParcelamentoCreate, db: Session=Depends(get_db), usuario_atual: models.Usuario=Depends(require_premium)):
     if dados.valor_total <= 0 or dados.quantidade_parcelas < 1: raise HTTPException(400, "Valor e quantidade de parcelas devem ser positivos")
     if dados.cartao_id:
         c=db.query(models.CartaoCredito).filter(models.CartaoCredito.id==dados.cartao_id, models.CartaoCredito.usuario_id==usuario_atual.id).first()
@@ -44,7 +44,7 @@ def criar(dados: schemas.ParcelamentoCreate, db: Session=Depends(get_db), usuari
     return enrich(p)
 
 @router.post("/{id}/quitar")
-def quitar(id:int, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def quitar(id:int, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     p=db.query(models.Parcelamento).filter(models.Parcelamento.id==id, models.Parcelamento.usuario_id==usuario_atual.id).first()
     if not p: raise HTTPException(404,"Parcelamento não encontrado")
     for parcela in p.parcelas: parcela.pago=True
@@ -52,13 +52,13 @@ def quitar(id:int, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depe
     return {"mensagem":"Parcelamento quitado com sucesso", **enrich(p)}
 
 @router.post("/parcelas/{movimentacao_id}/pagar")
-def pagar_parcela(movimentacao_id:int, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def pagar_parcela(movimentacao_id:int, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     m=db.query(models.Movimentacao).filter(models.Movimentacao.id==movimentacao_id, models.Movimentacao.usuario_id==usuario_atual.id).first()
     if not m: raise HTTPException(404,"Parcela não encontrada")
     m.pago=True; db.commit(); return {"mensagem":"Parcela marcada como paga"}
 
 @router.get("/dashboard/resumo")
-def resumo(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def resumo(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     hoje=datetime.utcnow()
     ps=db.query(models.Parcelamento).filter(models.Parcelamento.usuario_id==usuario_atual.id).all()
     parcelas=db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id==usuario_atual.id, models.Movimentacao.parcelamento_id!=None).all()

@@ -4,7 +4,7 @@ from sqlalchemy import extract
 from datetime import datetime
 from calendar import monthrange
 from database import get_db
-from auth import get_usuario_atual
+from auth import get_usuario_atual, require_premium
 import models, schemas
 
 router = APIRouter(prefix="/cartoes", tags=["Cartões de Crédito"])
@@ -32,20 +32,20 @@ def _response(db, cartao, usuario_id):
 
 
 @router.get("/")
-def listar(db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+def listar(db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(require_premium)):
     cartoes = db.query(models.CartaoCredito).filter(models.CartaoCredito.usuario_id == usuario_atual.id).order_by(models.CartaoCredito.data_criacao.desc()).all()
     return [_response(db, c, usuario_atual.id) for c in cartoes]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def criar(dados: schemas.CartaoCreditoCreate, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+def criar(dados: schemas.CartaoCreditoCreate, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(require_premium)):
     cartao = models.CartaoCredito(**dados.model_dump(), usuario_id=usuario_atual.id)
     db.add(cartao); db.commit(); db.refresh(cartao)
     return _response(db, cartao, usuario_atual.id)
 
 
 @router.put("/{id}")
-def atualizar(id: int, dados: schemas.CartaoCreditoUpdate, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+def atualizar(id: int, dados: schemas.CartaoCreditoUpdate, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(require_premium)):
     cartao = db.query(models.CartaoCredito).filter(models.CartaoCredito.id == id, models.CartaoCredito.usuario_id == usuario_atual.id).first()
     if not cartao: raise HTTPException(404, "Cartão não encontrado")
     for k, v in dados.model_dump(exclude_unset=True).items(): setattr(cartao, k, v)
@@ -54,7 +54,7 @@ def atualizar(id: int, dados: schemas.CartaoCreditoUpdate, db: Session = Depends
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def excluir(id: int, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+def excluir(id: int, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(require_premium)):
     cartao = db.query(models.CartaoCredito).filter(models.CartaoCredito.id == id, models.CartaoCredito.usuario_id == usuario_atual.id).first()
     if not cartao: raise HTTPException(404, "Cartão não encontrado")
     usado = db.query(models.Movimentacao).filter(models.Movimentacao.cartao_id == id, models.Movimentacao.usuario_id == usuario_atual.id).first()
@@ -63,7 +63,7 @@ def excluir(id: int, db: Session = Depends(get_db), usuario_atual: models.Usuari
 
 
 @router.get("/dashboard/gastos")
-def gastos_por_cartao(mes: int | None = None, ano: int | None = None, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+def gastos_por_cartao(mes: int | None = None, ano: int | None = None, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(require_premium)):
     cartoes = db.query(models.CartaoCredito).filter(models.CartaoCredito.usuario_id == usuario_atual.id).all()
     saida=[]
     for c in cartoes:

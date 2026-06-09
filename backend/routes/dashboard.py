@@ -4,7 +4,7 @@ from sqlalchemy import extract, or_
 from typing import Optional
 from database import get_db
 import models
-from auth import get_usuario_atual
+from auth import get_usuario_atual, require_premium
 from collections import defaultdict
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
@@ -51,7 +51,7 @@ def categorias_disponiveis(db: Session = Depends(get_db), usuario_atual: models.
 
 
 @router.get("/relatorio")
-def relatorio(mes: Optional[int] = Query(None, ge=1, le=12), ano: Optional[int] = Query(None), db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+def relatorio(mes: Optional[int] = Query(None, ge=1, le=12), ano: Optional[int] = Query(None), db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(require_premium)):
     q = db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id == usuario_atual.id)
     if mes: q = q.filter(extract("month", models.Movimentacao.data_movimentacao) == mes)
     if ano: q = q.filter(extract("year", models.Movimentacao.data_movimentacao) == ano)

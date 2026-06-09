@@ -4,7 +4,7 @@ from sqlalchemy import extract
 from datetime import datetime
 import json, csv, io
 from database import get_db
-from auth import get_usuario_atual, hash_senha, verificar_senha
+from auth import get_usuario_atual, require_premium, require_premium, hash_senha, verificar_senha
 import models, schemas
 from routes.notificacoes import gerar_notificacoes
 
@@ -15,7 +15,7 @@ def fmt_event(nome, categoria, valor, data, tipo):
     return {'nome': nome, 'categoria': categoria, 'valor': float(valor or 0), 'data': data.isoformat() if data else None, 'tipo': tipo}
 
 @router.get('/calendario')
-def calendario(mes:int|None=None, ano:int|None=None, response: Response=None, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def calendario(mes:int|None=None, ano:int|None=None, response: Response=None, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     if response is not None:
         response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     hoje=datetime.now(); mes=mes or hoje.month; ano=ano or hoje.year
@@ -34,7 +34,7 @@ def calendario(mes:int|None=None, ano:int|None=None, response: Response=None, db
     return {'mes':mes,'ano':ano,'eventos':eventos}
 
 @router.get('/score')
-def score(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def score(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     movs=db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id==usuario_atual.id).all()
     receitas=sum(m.valor for m in movs if m.tipo.value=='Receita')
     despesas=sum(m.valor for m in movs if m.tipo.value=='Despesa')
@@ -63,33 +63,33 @@ def score(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_u
     return {'score':score,'status':status,'receitas':receitas,'despesas':despesas,'saldo':saldo,'uso_cartao':gasto_cartao,'limite_cartao':limite,'parcelas_abertas':parcelas_abertas}
 
 @router.get('/patrimonio')
-def listar_patrimonio(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def listar_patrimonio(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     itens=db.query(models.PatrimonioItem).filter(models.PatrimonioItem.usuario_id==usuario_atual.id).order_by(models.PatrimonioItem.data_criacao.desc()).all()
     ativos=sum(i.valor for i in itens if i.tipo.value=='Ativo')
     passivos=sum(i.valor for i in itens if i.tipo.value=='Passivo')
     return {'itens':itens,'ativos':ativos,'passivos':passivos,'patrimonio_liquido':ativos-passivos}
 
 @router.post('/patrimonio', status_code=201)
-def criar_patrimonio(dados:schemas.PatrimonioCreate, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def criar_patrimonio(dados:schemas.PatrimonioCreate, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     tipo = models.TipoPatrimonio.ativo if dados.tipo == 'Ativo' else models.TipoPatrimonio.passivo
     item=models.PatrimonioItem(usuario_id=usuario_atual.id,nome=dados.nome,categoria=dados.categoria,tipo=tipo,valor=dados.valor,observacao=dados.observacao)
     db.add(item); db.commit(); db.refresh(item); return item
 
 @router.put('/patrimonio/{id}')
-def atualizar_patrimonio(id:int,dados:schemas.PatrimonioCreate,db:Session=Depends(get_db),usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def atualizar_patrimonio(id:int,dados:schemas.PatrimonioCreate,db:Session=Depends(get_db),usuario_atual:models.Usuario=Depends(require_premium)):
     item=db.query(models.PatrimonioItem).filter(models.PatrimonioItem.id==id, models.PatrimonioItem.usuario_id==usuario_atual.id).first()
     if not item: raise HTTPException(404,'Item não encontrado')
     item.nome=dados.nome; item.categoria=dados.categoria; item.tipo=models.TipoPatrimonio.ativo if dados.tipo=='Ativo' else models.TipoPatrimonio.passivo; item.valor=dados.valor; item.observacao=dados.observacao
     db.commit(); db.refresh(item); return item
 
 @router.delete('/patrimonio/{id}', status_code=204)
-def excluir_patrimonio(id:int,db:Session=Depends(get_db),usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def excluir_patrimonio(id:int,db:Session=Depends(get_db),usuario_atual:models.Usuario=Depends(require_premium)):
     item=db.query(models.PatrimonioItem).filter(models.PatrimonioItem.id==id, models.PatrimonioItem.usuario_id==usuario_atual.id).first()
     if not item: raise HTTPException(404,'Item não encontrado')
     db.delete(item); db.commit()
 
 @router.get('/backup')
-def backup(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def backup(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     def mov(m): return {'tipo':m.tipo.value,'valor':m.valor,'categoria':m.categoria,'descricao':m.descricao,'data_movimentacao':m.data_movimentacao.isoformat()}
     data={
       'usuario': {'nome':usuario_atual.nome,'email':usuario_atual.email},
@@ -101,13 +101,13 @@ def backup(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_
     return data
 
 @router.get('/backup/excel')
-def backup_csv(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def backup_csv(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     out=io.StringIO(); w=csv.writer(out); w.writerow(['tipo','valor','categoria','descricao','data'])
     for m in db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id==usuario_atual.id).all(): w.writerow([m.tipo.value,m.valor,m.categoria,m.descricao,m.data_movimentacao.isoformat()])
     return Response(out.getvalue(), media_type='text/csv', headers={'Content-Disposition':'attachment; filename=pinnacle-backup.csv'})
 
 @router.post('/backup/importar')
-def importar_backup(payload:dict, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def importar_backup(payload:dict, db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     criados=0
     for m in payload.get('movimentacoes',[]):
         try:
@@ -116,7 +116,7 @@ def importar_backup(payload:dict, db:Session=Depends(get_db), usuario_atual:mode
     db.commit(); return {'importados':criados}
 
 @router.get('/notificacoes/resumo')
-def notificacoes_resumo(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def notificacoes_resumo(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     gerar_notificacoes(db, usuario_atual.id)
     total=db.query(models.Notification).filter(models.Notification.usuario_id==usuario_atual.id, models.Notification.lida==False).count()
     return {'nao_lidas':total}

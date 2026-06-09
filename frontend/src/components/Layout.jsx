@@ -9,16 +9,16 @@ import './Layout.css'
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', help: 'Visão geral da sua vida financeira: saldo, receitas, despesas, metas, indicadores e gráficos.' },
   { to: '/movimentacoes', icon: ArrowLeftRight, label: 'Movimentações', help: 'Cadastre e acompanhe suas receitas e despesas. Esses dados alimentam o dashboard e os relatórios.' },
-  { to: '/cartoes', icon: CreditCard, label: 'Cartões', help: 'Gerencie cartões de crédito, limites, fechamento, vencimento, faturas e gastos por cartão.' },
-  { to: '/parcelamentos', icon: SplitSquareHorizontal, label: 'Parcelamentos', help: 'Controle compras parceladas, parcelas futuras, parcelas pagas e valor comprometido por mês.' },
-  { to: '/insights', icon: Brain, label: 'Insights IA', help: 'Análises automáticas sobre gastos, metas financeiras, cartões e parcelamentos. Sem consultas manuais.' },
+  { to: '/cartoes', icon: CreditCard, label: 'Cartões', premium: true, help: 'Gerencie cartões de crédito, limites, fechamento, vencimento, faturas e gastos por cartão.' },
+  { to: '/parcelamentos', icon: SplitSquareHorizontal, label: 'Parcelamentos', premium: true, help: 'Controle compras parceladas, parcelas futuras, parcelas pagas e valor comprometido por mês.' },
+  { to: '/insights', icon: Brain, label: 'Insights IA', premium: true, help: 'Análises automáticas sobre gastos, metas financeiras, cartões e parcelamentos. Sem consultas manuais.' },
   { to: '/simulador', icon: PiggyBank, label: 'Simulador', help: 'Planeje economias futuras, crie metas financeiras e acompanhe quanto falta para realizar seus objetivos.' },
-  { to: '/calendario', icon: CalendarDays, label: 'Calendário', help: 'Veja receitas, despesas, parcelas, vencimentos de cartões, metas e recorrências no calendário financeiro.' },
+  { to: '/calendario', icon: CalendarDays, label: 'Calendário', premium: true, help: 'Veja receitas, despesas, parcelas, vencimentos de cartões, metas e recorrências no calendário financeiro.' },
   { to: '/notificacoes', icon: Bell, label: 'Notificações', help: 'Alertas inteligentes sobre faturas, limites, metas atrasadas e gastos acima da média.' },
-  { to: '/patrimonio', icon: Landmark, label: 'Patrimônio', help: 'Cadastre ativos e passivos para acompanhar seu patrimônio líquido.' },
-  { to: '/importacao', icon: Upload, label: 'Importar Extrato', help: 'Importe extratos CSV ou Excel, revise a prévia, confirme categorias e evite lançamentos duplicados.' },
+  { to: '/patrimonio', icon: Landmark, label: 'Patrimônio', premium: true, help: 'Cadastre ativos e passivos para acompanhar seu patrimônio líquido.' },
+  { to: '/importacao', icon: Upload, label: 'Importar Extrato', premium: true, help: 'Importe extratos CSV ou Excel, revise a prévia, confirme categorias e evite lançamentos duplicados.' },
   { to: '/categorias', icon: Tags, label: 'Categorias', help: 'Crie e edite categorias personalizadas para organizar receitas e despesas do seu jeito.' },
-  { to: '/relatorios', icon: BarChart3, label: 'Relatórios', help: 'Acompanhe análises detalhadas, gráficos, indicadores e exportações para PDF.' },
+  { to: '/relatorios', icon: BarChart3, label: 'Relatórios', premium: true, help: 'Acompanhe análises detalhadas, gráficos, indicadores e exportações para PDF.' },
   { to: '/planos', icon: Crown, label: 'Planos', help: 'Veja o plano gratuito e a estrutura premium preparada para monetização.' },
   { to: '/configuracoes', icon: Settings, label: 'Configurações', help: 'Altere dados da conta, tema, notificações, backup e exclusão de conta.' },
   { to: '/perfil', icon: User, label: 'Perfil', help: 'Atualize seus dados pessoais, senha e preferências da conta.' },
@@ -34,6 +34,12 @@ const legalItems = [
   { to: '/privacidade', icon: Shield, label: 'Privacidade', help: 'Entenda como seus dados são tratados e protegidos.' },
   { to: '/contato', icon: Phone, label: 'Contato', help: 'Fale com o suporte pelo e-mail oficial e Instagram.' },
 ]
+
+const isPremiumUser = (usuario) => {
+  const role = (usuario?.role || '').toLowerCase()
+  const plano = (usuario?.plano || '').toLowerCase()
+  return role === 'admin' || role === 'premium' || plano === 'premium'
+}
 
 export default function Layout() {
   const { usuario, logout, setUsuario } = useAuth()
@@ -85,7 +91,10 @@ export default function Layout() {
     <header className="mobile-topbar"><button className="btn-icon" onClick={() => setMobileOpen(true)}><Menu size={20} /></button><img src={logo} alt="PinnacleBI" className="mobile-logo" /><button className="btn-icon" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')}>{theme === 'dark' ? <Sun size={18}/> : <Moon size={18}/>}</button></header>
     <aside className={`sidebar ${mobileOpen ? 'open' : ''}`}>
       <div className="sidebar-header"><img src={logo} alt="PinnacleBI" className="sidebar-logo" /><button className="btn-icon mobile-close" onClick={() => setMobileOpen(false)}><X size={18} /></button></div>
-      <nav className="sidebar-nav">{visibleNavItems.map(({ to, icon: Icon, label, help }, index) => <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${tourStep === index ? 'tour-highlight' : ''}`} onClick={() => setMobileOpen(false)} title={help}><Icon size={18} /><span>{label}</span><button type="button" className="nav-help" title={`Ajuda: ${label}`} onClick={(e)=>{e.preventDefault();e.stopPropagation();setQuickHelp({ label, help })}}>?</button></NavLink>)}</nav>
+      <nav className="sidebar-nav">{visibleNavItems.map(({ to, icon: Icon, label, help, premium }, index) => {
+        const locked = premium && !isPremiumUser(usuario)
+        return <NavLink key={to} to={locked ? '/planos' : to} className={({ isActive }) => `nav-item ${isActive ? 'active' : ''} ${tourStep === index ? 'tour-highlight' : ''} ${locked ? 'premium-locked' : ''}`} onClick={(e) => { if (locked) { setQuickHelp({ label: 'Recurso Premium', help: `${label} faz parte do Plano Premium. Acesse Planos para ver os benefícios.` }) } setMobileOpen(false) }} title={locked ? `${label} é um recurso Premium` : help}><Icon size={18} /><span>{label}</span>{locked && <Crown size={13} className="premium-mini-crown"/>}<button type="button" className="nav-help" title={`Ajuda: ${label}`} onClick={(e)=>{e.preventDefault();e.stopPropagation();setQuickHelp({ label: locked ? 'Recurso Premium' : label, help: locked ? `${label} faz parte do Plano Premium. Acesse Planos para ver os benefícios.` : help })}}>?</button></NavLink>
+      })}</nav>
       <div className="sidebar-footer">
         <button className="theme-toggle" onClick={()=>setTheme(t=>t==='dark'?'light':'dark')}>{theme === 'dark' ? <Sun size={16}/> : <Moon size={16}/>} {theme === 'dark' ? 'Tema claro' : 'Tema escuro'}</button>
         <NavLink to="/" className="footer-nav-item" onClick={() => setMobileOpen(false)}><Home size={16}/> <span>Visitar site</span></NavLink>

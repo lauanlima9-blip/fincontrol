@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 import json
 from database import get_db
-from auth import get_usuario_atual
+from auth import get_usuario_atual, require_premium
 import models
 
 router = APIRouter(prefix="/insights", tags=["Insights IA"])
@@ -14,12 +14,12 @@ def _periodo(db, usuario_id, mes, ano):
     return db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id==usuario_id, extract('month', models.Movimentacao.data_movimentacao)==mes, extract('year', models.Movimentacao.data_movimentacao)==ano).all()
 
 @router.get("/")
-def historico(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def historico(db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     itens=db.query(models.InsightIA).filter(models.InsightIA.usuario_id==usuario_atual.id).order_by(models.InsightIA.data_criacao.desc()).all()
     return [{"id":i.id,"mes":i.mes,"ano":i.ano,"titulo":i.titulo,"resumo":i.resumo,"indicadores":json.loads(i.indicadores or '{}'),"data_criacao":i.data_criacao} for i in itens]
 
 @router.post("/gerar")
-def gerar(mes:int=Query(...,ge=1,le=12), ano:int=Query(...,ge=2000), db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(get_usuario_atual)):
+def gerar(mes:int=Query(...,ge=1,le=12), ano:int=Query(...,ge=2000), db:Session=Depends(get_db), usuario_atual:models.Usuario=Depends(require_premium)):
     movs=_periodo(db, usuario_atual.id, mes, ano)
     mes_ant, ano_ant=(12, ano-1) if mes==1 else (mes-1, ano)
     movs_ant=_periodo(db, usuario_atual.id, mes_ant, ano_ant)
@@ -74,7 +74,7 @@ def gerar(mes:int=Query(...,ge=1,le=12), ano:int=Query(...,ge=2000), db:Session=
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def excluir(id: int, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(get_usuario_atual)):
+def excluir(id: int, db: Session = Depends(get_db), usuario_atual: models.Usuario = Depends(require_premium)):
     insight = db.query(models.InsightIA).filter(
         models.InsightIA.id == id,
         models.InsightIA.usuario_id == usuario_atual.id

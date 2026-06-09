@@ -38,6 +38,22 @@ function AdminRoute({ children }) {
   return usuario.role === 'admin' ? children : <div className="admin-denied"><h1>403 - Acesso Negado</h1><p>Somente administradores podem acessar esta área.</p></div>
 }
 
+function isPremiumUser(usuario) {
+  const role = (usuario?.role || '').toLowerCase()
+  const plano = (usuario?.plano || '').toLowerCase()
+  return role === 'admin' || role === 'premium' || plano === 'premium'
+}
+
+function PremiumRoute({ children }) {
+  const { usuario, loading } = useAuth()
+  if (loading) return <div className="loading-screen"><div className="spinner" /></div>
+  if (!usuario) return <Navigate to="/login" replace />
+  if (!isPremiumUser(usuario)) {
+    return <div className="feature-page fade-in"><div className="feature-card premium-lock-card"><h1>🔒 Recurso Premium</h1><p>Este módulo faz parte do Plano Premium do Pinnacle Finance.</p><p>Atualize seu plano para acessar cartões, parcelamentos, insights IA, importação, relatórios avançados, calendário, score, patrimônio e backup.</p><a className="btn-save" href="/planos">Ver planos</a></div></div>
+  }
+  return children
+}
+
 function PublicRoute({ children }) {
   const { usuario, loading } = useAuth()
   if (loading) return null
@@ -59,18 +75,18 @@ export default function App() {
           <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="movimentacoes" element={<MovimentacoesPage />} />
-            <Route path="relatorios" element={<RelatoriosPage />} />
+            <Route path="relatorios" element={<PremiumRoute><RelatoriosPage /></PremiumRoute>} />
             <Route path="categorias" element={<CategoriasPage />} />
-            <Route path="cartoes" element={<CartoesPage />} />
-            <Route path="parcelamentos" element={<ParcelamentosPage />} />
-            <Route path="insights" element={<InsightsPage />} />
+            <Route path="cartoes" element={<PremiumRoute><CartoesPage /></PremiumRoute>} />
+            <Route path="parcelamentos" element={<PremiumRoute><ParcelamentosPage /></PremiumRoute>} />
+            <Route path="insights" element={<PremiumRoute><InsightsPage /></PremiumRoute>} />
             <Route path="simulador" element={<SimuladorPage />} />
-            <Route path="calendario" element={<CalendarioPage />} />
+            <Route path="calendario" element={<PremiumRoute><CalendarioPage /></PremiumRoute>} />
             <Route path="notificacoes" element={<NotificacoesPage />} />
-            <Route path="patrimonio" element={<PatrimonioPage />} />
+            <Route path="patrimonio" element={<PremiumRoute><PatrimonioPage /></PremiumRoute>} />
             <Route path="configuracoes" element={<ConfiguracoesPage />} />
             <Route path="planos" element={<PlanosPage />} />
-            <Route path="importacao" element={<ImportacaoPage />} />
+            <Route path="importacao" element={<PremiumRoute><ImportacaoPage /></PremiumRoute>} />
             <Route path="sobre" element={<SobrePage />} />
             <Route path="termos" element={<TermosPage />} />
             <Route path="privacidade" element={<PrivacidadePage />} />
