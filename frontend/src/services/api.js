@@ -26,7 +26,7 @@ export const adminService = {
   usuario: (id) => api.get(`/admin/usuarios/${id}`),
   editarUsuario: (id,dados) => api.put(`/admin/usuarios/${id}`, dados),
   acaoUsuario: (id,dados) => api.post(`/admin/usuarios/${id}/acao`, dados),
-  excluirUsuario: (id) => api.delete(`/admin/usuarios/${id}`),
+  excluirUsuario: (id) => api.delete(`/admin/usuarios/${id}`).catch((err) => { if (err?.response?.status === 405 || err?.response?.status === 404) return api.post(`/admin/usuarios/${id}/excluir`); throw err }),
   impersonar: (id) => api.post(`/admin/usuarios/${id}/impersonar`),
   planos: () => api.get('/admin/planos'),
   criarPlano: (dados) => api.post('/admin/planos', dados),

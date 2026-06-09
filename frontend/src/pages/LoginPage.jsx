@@ -62,7 +62,11 @@ export default function LoginPage() {
       const email = forgotEmail || form.email
       if (!email) { setErro('Informe o e-mail cadastrado.'); return }
       const r = await authService.esqueciSenha({ email })
-      setMsg(r.data.mensagem || 'Se este e-mail estiver cadastrado, enviaremos instruções de recuperação.')
+      if (r.data?.email_enviado === false) {
+        setErro(r.data?.erro_email ? `${r.data.mensagem} Detalhe: ${r.data.erro_email}` : r.data.mensagem)
+      } else {
+        setMsg(r.data.mensagem || 'Se este e-mail estiver cadastrado, enviaremos instruções de recuperação.')
+      }
       setResetToken('')
       setNovaSenha('')
       setConfirmarSenha('')

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func, extract
+from sqlalchemy import func, extract, text
 from datetime import datetime, timedelta, timezone
 from database import get_db
 import models
@@ -46,25 +46,41 @@ def bloquear_alteracao_super_admin(db, admin, target_user, request, descricao="T
 
 
 def excluir_usuario_com_dependencias(db: Session, usuario: models.Usuario):
-    """Remove um usuário e todos os registros dependentes que podem travar por FK.
-    Mantém o delete explícito para funcionar bem em PostgreSQL/Render mesmo sem ON DELETE CASCADE no banco existente.
+    """Remove um usuário e todos os registros dependentes.
+
+    Esta função é intencionalmente explícita porque bancos PostgreSQL já existentes no
+    Render podem não ter ON DELETE CASCADE nas FKs criadas antes das novas models.
+    Também zera FKs internas de movimentações para evitar erro em compras parceladas,
+    cartões e recorrências.
     """
     uid = usuario.id
-    # Tabelas administrativas que têm FK para usuários e não usam cascade no model.
+
+    # Histórico e logs administrativos.
     db.query(models.LoginHistory).filter(models.LoginHistory.user_id == uid).delete(synchronize_session=False)
     db.query(models.SystemLog).filter(models.SystemLog.user_id == uid).update({models.SystemLog.user_id: None}, synchronize_session=False)
 
-    # Dependências de negócio. A ordem evita conflito com cartao_id/parcelamento_id em movimentações.
+    # Primeiro remove notificações/analytics simples.
+    db.query(models.Notification).filter(models.Notification.usuario_id == uid).delete(synchronize_session=False)
+    db.query(models.InsightIA).filter(models.InsightIA.usuario_id == uid).delete(synchronize_session=False)
+    db.query(models.SimulacaoFinanceira).filter(models.SimulacaoFinanceira.usuario_id == uid).delete(synchronize_session=False)
+    db.query(models.MetaFinanceira).filter(models.MetaFinanceira.usuario_id == uid).delete(synchronize_session=False)
+    db.query(models.Meta).filter(models.Meta.usuario_id == uid).delete(synchronize_session=False)
+    db.query(models.Categoria).filter(models.Categoria.usuario_id == uid).delete(synchronize_session=False)
+    db.query(models.PatrimonioItem).filter(models.PatrimonioItem.usuario_id == uid).delete(synchronize_session=False)
+
+    # Evita travas por FKs entre movimentações, cartões e parcelamentos.
+    mov_ids = [row[0] for row in db.query(models.Movimentacao.id).filter(models.Movimentacao.usuario_id == uid).all()]
+    if mov_ids:
+        db.query(models.Movimentacao).filter(models.Movimentacao.recorrencia_origem_id.in_(mov_ids)).update({models.Movimentacao.recorrencia_origem_id: None}, synchronize_session=False)
+        db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id == uid).update({
+            models.Movimentacao.recorrencia_origem_id: None,
+            models.Movimentacao.cartao_id: None,
+            models.Movimentacao.parcelamento_id: None,
+        }, synchronize_session=False)
+
     db.query(models.Movimentacao).filter(models.Movimentacao.usuario_id == uid).delete(synchronize_session=False)
     db.query(models.Parcelamento).filter(models.Parcelamento.usuario_id == uid).delete(synchronize_session=False)
     db.query(models.CartaoCredito).filter(models.CartaoCredito.usuario_id == uid).delete(synchronize_session=False)
-    db.query(models.Meta).filter(models.Meta.usuario_id == uid).delete(synchronize_session=False)
-    db.query(models.MetaFinanceira).filter(models.MetaFinanceira.usuario_id == uid).delete(synchronize_session=False)
-    db.query(models.Categoria).filter(models.Categoria.usuario_id == uid).delete(synchronize_session=False)
-    db.query(models.InsightIA).filter(models.InsightIA.usuario_id == uid).delete(synchronize_session=False)
-    db.query(models.SimulacaoFinanceira).filter(models.SimulacaoFinanceira.usuario_id == uid).delete(synchronize_session=False)
-    db.query(models.Notification).filter(models.Notification.usuario_id == uid).delete(synchronize_session=False)
-    db.query(models.PatrimonioItem).filter(models.PatrimonioItem.usuario_id == uid).delete(synchronize_session=False)
 
     db.delete(usuario)
 
@@ -180,8 +196,7 @@ def acao_usuario(user_id: int, dados: dict, request: Request, db: Session = Depe
     return {"mensagem": "Ação realizada com sucesso"}
 
 
-@router.delete("/usuarios/{user_id}")
-def excluir_usuario(user_id: int, request: Request, db: Session = Depends(get_db), admin=Depends(require_admin)):
+def _excluir_usuario_admin(user_id: int, request: Request, db: Session, admin):
     u = db.query(models.Usuario).filter(models.Usuario.id == user_id).first()
     if not u:
         raise HTTPException(404, "Usuário não encontrado")
@@ -190,10 +205,26 @@ def excluir_usuario(user_id: int, request: Request, db: Session = Depends(get_db
     if u.id == admin.id:
         raise HTTPException(400, "Você não pode excluir seu próprio usuário admin")
     email_excluido = u.email
-    log(db, admin, "Admin - Excluir usuário", f"Usuário {email_excluido} excluído", request, None)
-    excluir_usuario_com_dependencias(db, u)
-    db.commit()
+    try:
+        log(db, admin, "Admin - Excluir usuário", f"Usuário {email_excluido} excluído", request, None)
+        excluir_usuario_com_dependencias(db, u)
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        detalhe = f"Erro ao excluir usuário: {type(exc).__name__}: {exc}"
+        raise HTTPException(status_code=500, detail=detalhe)
     return {"mensagem": "Usuário excluído", "email": email_excluido}
+
+
+@router.delete("/usuarios/{user_id}")
+def excluir_usuario(user_id: int, request: Request, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    return _excluir_usuario_admin(user_id, request, db, admin)
+
+
+@router.post("/usuarios/{user_id}/excluir")
+def excluir_usuario_post(user_id: int, request: Request, db: Session = Depends(get_db), admin=Depends(require_admin)):
+    # Rota reserva caso algum proxy/cliente bloqueie DELETE em produção.
+    return _excluir_usuario_admin(user_id, request, db, admin)
 
 
 @router.post("/usuarios/{user_id}/impersonar")

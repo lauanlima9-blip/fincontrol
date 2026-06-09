@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 import secrets
 import random
 import hashlib
-from email_utils import enviar_recuperacao_senha, enviar_codigo_2fa
+from email_utils import enviar_recuperacao_senha, enviar_codigo_2fa, status_email
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
@@ -111,15 +111,23 @@ def esqueci_senha(dados: schemas.EsqueciSenhaRequest, request: Request, db: Sess
     usuario.reset_token_expira_em = _agora() + timedelta(minutes=30)
     db.commit()
     enviado = enviar_recuperacao_senha(usuario.email, token)
+    st = status_email()
+    detalhe_falha = st.get("ultimo_erro") or "SMTP não configurado ou erro no provedor"
     db.add(models.SystemLog(
         user_id=usuario.id,
         acao="Recuperação de senha",
-        descricao="E-mail de recuperação enviado" if enviado else "Falha ao enviar e-mail de recuperação: SMTP não configurado ou erro no provedor",
+        descricao="E-mail de recuperação enviado" if enviado else f"Falha ao enviar e-mail de recuperação: {detalhe_falha}",
         ip=request.client.host if request.client else None,
         navegador=request.headers.get("user-agent")
     ))
     db.commit()
-    return {"mensagem": mensagem, "email_enviado": enviado}
+    if not enviado:
+        return {
+            "mensagem": "Solicitação registrada, mas o e-mail não foi enviado. Verifique as configurações SMTP no painel admin ou nas variáveis do Render.",
+            "email_enviado": False,
+            "erro_email": detalhe_falha,
+        }
+    return {"mensagem": mensagem, "email_enviado": True}
 
 
 @router.post("/redefinir-senha")
